@@ -12,11 +12,12 @@ const metBaseURL = "https://collectionapi.metmuseum.org"
     data["imageURL"]: contains IIIF URL forr image
 */
 
-class MetAPI {
+export default class MetAPI {
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
         this.name = "The Metropolitan Museum of Art";
-        this.searchDataCache = {}; // searchDataCache[searchTerm] = [array of object IDs]
+        this.searchCache = {};   // searchCache[searchTerm] = [array of image URLs for associated search term]
+        this.objectIDsBySearchTermCache = {}; // objectIDsBySearchTermCache[searchTerm] = [array of object IDs]
         this.objectCache = {};
     }
 
@@ -24,8 +25,8 @@ class MetAPI {
         Returns object ID's for items that contain keywords in their objects
         to get images, use this in conjunction with Object method
     */
-    async search(searchTerm) {
-        if (this.searchDataCache[searchTerm]) return this.searchDataCache[searchTerm];
+    async objectIDsBySearchTerm(searchTerm) {
+        if (this.objectIDsBySearchTermCache[searchTerm]) return this.objectIDsBySearchTermCache[searchTerm];
 
         let searchFragment = `/public/collection/v1/search?q="${searchTerm}"`;
 
@@ -33,9 +34,9 @@ class MetAPI {
 
         let processedData = await data.json();
 
-        searchDataCache[searchTerm] = processedData["objectIDs"];
+        objectIDsBySearchTermCache[searchTerm] = processedData["objectIDs"];
 
-        return this.searchDataCache[searchTerm];
+        return this.objectIDsBySearchTermCache[searchTerm];
 
     }
 
@@ -49,6 +50,11 @@ class MetAPI {
         let data = await fetch(this.baseUrl + objectFragment);
 
         return await data.json();
+   }
+
+   // returns array of image URLs according to search term
+   async search(searchTerm) {
+        
    }
 }
 
