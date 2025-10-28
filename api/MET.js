@@ -22,7 +22,7 @@ export default class MetAPI {
     }
 
     /*
-        Returns object ID's for items that contain keywords in their objects
+        Returns array of object ID's for items that contain keywords in their objects
         to get images, use this in conjunction with Object method
     */
     async objectIDsBySearchTerm(searchTerm) {
@@ -34,7 +34,7 @@ export default class MetAPI {
 
         let processedData = await data.json();
 
-        objectIDsBySearchTermCache[searchTerm] = processedData["objectIDs"];
+        this.objectIDsBySearchTermCache[searchTerm] = processedData["objectIDs"];
 
         return this.objectIDsBySearchTermCache[searchTerm];
 
@@ -44,17 +44,40 @@ export default class MetAPI {
         Returns images, description, and more according to ID for object
         see documentation on website for more information
     */
-   async getObject(objectId) {
+   async getObject(objectID) {
+        if(this.objectCache[objectID]) return this.objectCache[objectID];
+
         let objectFragment = `/public/collection/v1/objects/${objectID}`;
 
         let data = await fetch(this.baseUrl + objectFragment);
 
-        return await data.json();
+        let processedData = data.json();
+
+        this.objectCache[objectID] = processedData;
+
+        return this.objectCache[objectID];
    }
 
-   // returns array of image URLs according to search term
+   /* returns json objects of image data according to search term
+      see documentation on website for more information
+   */ 
    async search(searchTerm) {
+        if (this.searchCache[searchTerm]) return this.searchCache[searchTerm];
+
+        let objectsArray = [];
+
+
+        let objectIDsBySearchTerm = await this.objectIDsBySearchTerm(searchTerm);
+
+        for(let i = 0; i < objectIDsBySearchTerm.length; i++) {
+            let object = await this.getObject(objectIDsBySearchTerm[i])
+            objectsArray[i] = object;
+            console.log(object);
+        }
+
+        this.searchCache[searchTerm] = objectsArray;
         
+        return this.searchCache;
    }
 }
 
