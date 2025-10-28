@@ -15,7 +15,9 @@ const metBaseURL = "https://collectionapi.metmuseum.org"
 class MetAPI {
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
-        this.searchDataCache = {}
+        this.name = "The Metropolitan Museum of Art";
+        this.searchDataCache = {}; // searchDataCache[searchTerm] = [array of object IDs]
+        this.objectCache = {};
     }
 
     /*
@@ -29,9 +31,11 @@ class MetAPI {
 
         let data = await fetch(this.baseUrl + searchFragment);
 
-        return await data.json();
+        let processedData = await data.json();
 
-        return this.searchDataCache;
+        searchDataCache[searchTerm] = processedData["objectIDs"];
+
+        return this.searchDataCache[searchTerm];
 
     }
 
