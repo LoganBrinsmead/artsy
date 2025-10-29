@@ -1,8 +1,8 @@
-import { MetAPI } from './MET'
+import { MetAPI, Chicago } from './MET'
 
 class API {
     constructor() {
-        this.apis = [MetAPI]
+        this.apis = [ MetAPI, Chicago ]
         this.dataCache = {};
     }
 
