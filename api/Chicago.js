@@ -10,14 +10,22 @@ export default class Chicago {
     // TODO: turn this into search function
     //  include image URL in the data for parsing
     // parse data out so it is extendable, create a parse function to do this.
-    async getObjectsBySearch(searchTerm) {
+    async search(searchTerm) {
         if(this.objectsBySearchCache[searchTerm]) return this.objectsBySearchCache[searchTerm];
 
         let dataRequestUrl = baseURL + `/artworks/search?q=${searchTerm}`;
 
+        // array of objects
         let data = await fetch(dataRequestUrl);
+        data = data["data"];
 
-        this.objectsBySearchCache[searchTerm] = data["data"];
+        // insert image URL into data
+        for(let i = 0; i < data.length; i++) {
+            let imageIdentifier = data[i]["id"];
+            data[i]["imageURL"] = getImageByID(imageIdentifier);
+        }
+
+        this.objectsBySearchCache[searchTerm] = data;
 
         return this.objectsBySearchCache[searchTerm];
     }
