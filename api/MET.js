@@ -79,6 +79,10 @@ export default class MetAPI {
         
         return this.searchCache;
    }
+
+   formatOutput(data) {
+    
+   }
 }
 
 const metAPI = new MetAPI(metBaseURL);
