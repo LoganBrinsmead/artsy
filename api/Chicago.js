@@ -19,9 +19,10 @@ export default class Chicago {
     let data = await fetch(dataRequestUrl);
     data = data["data"];
 
-    // insert image URL into data
+    // insert image URL into data and process data
     for (let i = 0; i < data.length; i++) {
       let imageIdentifier = data[i]["id"];
+      data[i] = this.formatOutput(data[i]);
       data[i]["imageURL"] = getImageByID(imageIdentifier);
     }
 

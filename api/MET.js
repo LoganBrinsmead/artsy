@@ -71,8 +71,7 @@ export default class MetAPI {
 
         for(let i = 0; i < objectIDsBySearchTerm.length; i++) {
             let object = await this.getObject(objectIDsBySearchTerm[i])
-            objectsArray[i] = object;
-            console.log(object);
+            objectsArray[i] = this.formatData(object);
         }
 
         this.searchCache[searchTerm] = objectsArray;
@@ -80,11 +79,21 @@ export default class MetAPI {
         return this.searchCache;
    }
 
-   formatOutput(data) {
-    
-   }
-}
+   /* Formats objects to be processed in index.js
+      Example object: https://collectionapi.metmuseum.org/public/collection/v1/objects/437133
 
-const metAPI = new MetAPI(metBaseURL);
-const data = await metAPI.search('flowers');
-console.log(data)
+   */
+  formatOutput(data) {
+    let formattedObject = {
+      title: data["title"],
+      artist: data["artistDisplayName"],
+      datePainted: data["objectDate"],
+      countryOfOrigin: data["artistNationality"],
+      description: "No description available.",
+      department: data["department"],
+      style: "No style (e.g. contemporary) available.",
+    };
+
+    return formattedObject;
+  }
+}
