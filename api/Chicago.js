@@ -1,44 +1,61 @@
-import { CHICAGO_URL } from '../utils/constants';
+export default class Chicago {
+  constructor() {
+    this.name = "Art Institute of Chicago";
+    this.baseURL = "https://api.artic.edu/api/v1/";
+    this.objectsBySearchCache = {};
+    this.iifURL = "https://www.artic.edu/iiif/2";
+  }
 
-let dataCache = {};
+  // TODO: turn this into search function
+  //  include image URL in the data for parsing
+  // parse data out so it is extendable, create a parse function to do this.
+  async search(searchTerm) {
+    if (this.objectsBySearchCache[searchTerm])
+      return this.objectsBySearchCache[searchTerm];
 
-/*
-    data is stored and returned in format:
+    let dataRequestUrl = baseURL + `/artworks/search?q=${searchTerm}`;
 
-    data["data"]: contains the JSON data for the object
-    data["imageURL"]: contains IIIF URL forr image
-*/
-export default ChicagoAPI = (searchTerm) => {
-    const [data, setData] = useState(null);
+    // array of objects
+    let data = await fetch(dataRequestUrl);
+    data = data["data"];
 
-    if(dataCache[searchTerm]) {
-        return dataCache[searchTerm];
+    // insert image URL into data and process data
+    for (let i = 0; i < data.length; i++) {
+      let imageIdentifier = data[i]["id"];
+      data[i] = this.formatOutput(data[i]);
+      data[i]["imageURL"] = getImageByID(imageIdentifier);
     }
 
+    this.objectsBySearchCache[searchTerm] = data;
 
-    let dataRequestURL = `https://api.artic.edu/api/v1/artworks/search?q=${searchTerm}&is_public_domain=true`
+    return this.objectsBySearchCache[searchTerm];
+  }
 
-    // TODO: make data request here. REMEMBER TO PUT IDENTIFICATION IN HEADER
-    const dataRequest = "placeholder for request";
+  getImageByID(identifier) {
+    return `https://www.artic.edu/iiif/2/${identifier}/full/843,/0/default.jpg`;
+  }
 
-    let imageId = dataRequest["image_id"];
+  /*
+        Formats the data in a readable format for the API function
+        parameter data is an object in the format returned by this API
+        Example object: https://api.artic.edu/api/v1/artworks/129884
 
-
-    let imageDataRequestURL = `https://api.artic.edu/api/v1/artworks/${imageId}?fields=id,title,image_id`
-
-    // make image data request here REMEMBER TO PUT IDENTIFICATION IN HEADER
-
-    const imageDataRequest = "placeholder for request";
-
-    let iiifIdentification = imageDataRequest["IIIF"];
-
-    let imageURL = `https://www.artic.edu/iiif/2/${iiifIdentification}/full/843,/0/default.jpg`
-
-    dataCache[searchTerm] = {
-        "data": dataRequest,
-        "imageURL" : imageURL
+        TODO: for future "format outputs" it may be more prudent to write a single
+        function that formats outputs for each api in the base api file (index.js)
+        perhaps can create then pass an object that contains the respective keys
+        for each API? 
+    */
+  formatOutput(data) {
+    let formattedObject = {
+      title: data["title"],
+      artist: data["artist_title"],
+      datePainted: data["date_end"],
+      countryOfOrigin: data["place_of_origin"],
+      description: data["description"],
+      department: data["department_title"],
+      style: data["style_title"],
     };
 
-    return dataCache[searchTerm]
-
+    return formattedObject;
+  }
 }

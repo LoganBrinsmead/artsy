@@ -12,20 +12,21 @@ const metBaseURL = "https://collectionapi.metmuseum.org"
     data["imageURL"]: contains IIIF URL forr image
 */
 
-class MetAPI {
+export default class MetAPI {
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
         this.name = "The Metropolitan Museum of Art";
-        this.searchDataCache = {}; // searchDataCache[searchTerm] = [array of object IDs]
+        this.searchCache = {};   // searchCache[searchTerm] = [array of image URLs for associated search term]
+        this.objectIDsBySearchTermCache = {}; // objectIDsBySearchTermCache[searchTerm] = [array of object IDs]
         this.objectCache = {};
     }
 
     /*
-        Returns object ID's for items that contain keywords in their objects
+        Returns array of object ID's for items that contain keywords in their objects
         to get images, use this in conjunction with Object method
     */
-    async search(searchTerm) {
-        if (this.searchDataCache[searchTerm]) return this.searchDataCache[searchTerm];
+    async objectIDsBySearchTerm(searchTerm) {
+        if (this.objectIDsBySearchTermCache[searchTerm]) return this.objectIDsBySearchTermCache[searchTerm];
 
         let searchFragment = `/public/collection/v1/search?q="${searchTerm}"`;
 
@@ -33,9 +34,9 @@ class MetAPI {
 
         let processedData = await data.json();
 
-        searchDataCache[searchTerm] = processedData["objectIDs"];
+        this.objectIDsBySearchTermCache[searchTerm] = processedData["objectIDs"];
 
-        return this.searchDataCache[searchTerm];
+        return this.objectIDsBySearchTermCache[searchTerm];
 
     }
 
@@ -43,15 +44,56 @@ class MetAPI {
         Returns images, description, and more according to ID for object
         see documentation on website for more information
     */
-   async getObject(objectId) {
+   async getObject(objectID) {
+        if(this.objectCache[objectID]) return this.objectCache[objectID];
+
         let objectFragment = `/public/collection/v1/objects/${objectID}`;
 
         let data = await fetch(this.baseUrl + objectFragment);
 
-        return await data.json();
-   }
-}
+        let processedData = data.json();
 
-const metAPI = new MetAPI(metBaseURL);
-const data = await metAPI.search('flowers');
-console.log(data)
+        this.objectCache[objectID] = processedData;
+
+        return this.objectCache[objectID];
+   }
+
+   /* returns json objects of image data according to search term
+      see documentation on website for more information
+   */ 
+   async search(searchTerm) {
+        if (this.searchCache[searchTerm]) return this.searchCache[searchTerm];
+
+        let objectsArray = [];
+
+
+        let objectIDsBySearchTerm = await this.objectIDsBySearchTerm(searchTerm);
+
+        for(let i = 0; i < objectIDsBySearchTerm.length; i++) {
+            let object = await this.getObject(objectIDsBySearchTerm[i])
+            objectsArray[i] = this.formatData(object);
+        }
+
+        this.searchCache[searchTerm] = objectsArray;
+        
+        return this.searchCache;
+   }
+
+   /* Formats objects to be processed in index.js
+      Example object: https://collectionapi.metmuseum.org/public/collection/v1/objects/437133
+
+   */
+  formatOutput(data) {
+    let formattedObject = {
+      title: data["title"],
+      artist: data["artistDisplayName"],
+      datePainted: data["objectDate"],
+      countryOfOrigin: data["artistNationality"],
+      description: "No description available.",
+      department: data["department"],
+      style: "No style (e.g. contemporary) available.",
+    };
+
+    return formattedObject;
+  }
+}
