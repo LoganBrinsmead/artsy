@@ -1,7 +1,7 @@
 
 export default class Chicago {
     constructor() {
-        this.name= "Art Institute of Chicago";
+        this.name = "Art Institute of Chicago";
         this.baseURL = "https://api.artic.edu/api/v1/"
         this.objectsBySearchCache = {};
         this.iifURL = "https://www.artic.edu/iiif/2";
@@ -33,6 +33,34 @@ export default class Chicago {
     getImageByID(identifier) {
         return `https://www.artic.edu/iiif/2/${identifier}/full/843,/0/default.jpg`;
 
+    }
+
+    /*
+        Formats the data in a readable format for the API function
+        parameter data is an array of objects in the format returned by this API
+        Example object: https://api.artic.edu/api/v1/artworks/129884
+
+        TODO: for future "format outputs" it may be more prudent to write a single
+        function that formats outputs for each api in the base api file (index.js)
+        perhaps can create then pass an object that contains the respective keys
+        for each API? 
+    */
+    formatOutput(data) {
+        let formattedData = [];
+        let curFormattedObject = {};
+        for(let i = 0; i < data.length; i++) {
+            curFormattedObject = {
+                "title": data["title"],
+                "artist": data["artist_title"],
+                "datePainted": data["date_end"],
+                "countryOfOrigin": data["place_of_origin"],
+                "description": data["description"],
+                "department": data["department_title"],
+                "style": data["style_title"],
+
+
+            }
+        }
     }
 
 }
