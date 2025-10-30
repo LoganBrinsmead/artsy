@@ -18,7 +18,8 @@ class API {
         */
         let currentData = {};
         for(let i = 0; i < this.apis.length; i++) {
-            let curObjects = api.search(searchTerm);        // array of objects
+            let api = this.apis[i];
+            let curObjects = await api.search(searchTerm);        // array of objects
             let currentSource = api.name;
             currentData["source"] = currentSource;
             currentData["data"] = curObjects;
