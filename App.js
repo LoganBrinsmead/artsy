@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import "./global.css";
 import ArtworkPage from './components/ArtworkPage';
+import { useState } from 'react';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,17 @@ function SearchScreen({ navigation }) {
 }
 
 export default function App() {
+  const [isLoading, setLoading] = useState(true);
+  const [artObjects, setObjects] = useState([]); 
+
+  // async function getObjectsBySearchTerm(searchTerm) {
+  //   await api.search(searchTerm);
+  //   if(statusCode === "200") {
+  //     setLoading(false);
+  //     setObjects()
+  //   }
+  // }
+
   return (
     <NavigationContainer>
       <StatusBar style="auto" />

@@ -3,8 +3,6 @@
     Documentation: https://metmuseum.github.io/
 */
 
-const metBaseURL = "https://collectionapi.metmuseum.org"
-
 /*
     data is stored and returned in format:
 
@@ -28,7 +26,7 @@ export default class MetAPI {
     async objectIDsBySearchTerm(searchTerm) {
         if (this.objectIDsBySearchTermCache[searchTerm]) return this.objectIDsBySearchTermCache[searchTerm];
 
-        let searchFragment = `/public/collection/v1/search?q="${searchTerm}"`;
+        let searchFragment = `/public/collection/v1/search?hasImages=true&q="${searchTerm}"`;
 
         let data = await fetch(this.baseUrl + searchFragment);
 
@@ -58,7 +56,7 @@ export default class MetAPI {
         return this.objectCache[objectID];
    }
 
-   /* returns json objects of image data according to search term
+   /* returns array of json objects of image data according to search term
       see documentation on website for more information
    */ 
    async search(searchTerm) {
@@ -86,6 +84,7 @@ export default class MetAPI {
   formatOutput(data) {
     let formattedObject = {
       title: data["title"],
+      imageURL: data["primaryImage"],
       artist: data["artistDisplayName"],
       datePainted: data["objectDate"],
       countryOfOrigin: data["artistNationality"],

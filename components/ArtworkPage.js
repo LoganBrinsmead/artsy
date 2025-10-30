@@ -4,8 +4,9 @@ import "../global.css";
 export default function ArtworkPage(props) {
   const p = props?.route?.params ?? props;
   const imageURL = p?.imageURL || p?.uri ||
-    "https://images.unsplash.com/photo-1526318472351-c75fcf070305?w=1200&q=80&auto=format&fit=crop";
+    "Error loading artwork.";
   const title = p?.title || "Untitled";
+  const artist = p?.artist || "Artist Unknown";
   const description = p?.description || "No description available for this artwork.";
   const department = p?.department || p?.source || "Unknown Department";
 
@@ -20,7 +21,8 @@ export default function ArtworkPage(props) {
       </View>
 
       <View className="px-5 py-6 gap-3">
-        <Text className="text-2xl font-bold text-gray-900">{title}</Text>
+        <Text className="text-2xl font-bold text-gray-300">{title}</Text>
+        <Text className="text-sm font-medium text-indigo-600">{artist}</Text>
         <Text className="text-sm font-medium text-indigo-600">{department}</Text>
         <Text className="text-base leading-6 text-gray-700">{description}</Text>
       </View>
