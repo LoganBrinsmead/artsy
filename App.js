@@ -87,6 +87,9 @@ export default function App() {
   // }
 
   return (
+    <View>
+      <Text>Test</Text>
+      
     <NavigationContainer>
       <StatusBar style="auto" />
       <Stack.Navigator>
@@ -94,5 +97,7 @@ export default function App() {
         <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
       </Stack.Navigator>
     </NavigationContainer>
+    </View>
+
   );
 }
