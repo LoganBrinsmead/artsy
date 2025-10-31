@@ -74,6 +74,7 @@ export default class MetAPI {
         // TODO: implement better error handling (what to do if the API fails / we get rate limited?)
         // TODO: maybe implement a queue system to handle requests? (would have to be done throughout application)
         // TODO: implement better caching system (cache objects, not just search term)
+        // TODO: can we show the first x results, then process the rest in the background?
         let countRequests = 0;
         for (let i = 0; i < objectIDsBySearchTerm.length; i++) {
             const object = await this.getObject(objectIDsBySearchTerm[i]);
