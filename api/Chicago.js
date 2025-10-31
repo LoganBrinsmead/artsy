@@ -25,10 +25,11 @@ export default class Chicago {
 
     // insert image URL into data and process data
     for (let i = 0; data && i < data.length; i++) {
+      // console.log(data[i])
       let currentObjectIdentifier = data[i]["id"];
       let currentObject = await this.getObjectByID(currentObjectIdentifier);
 
-      returnData[i] = this.formatOutput(currentObject);
+      returnData[i] = this.formatOutput(currentObject["data"]);
     }
 
     this.objectsBySearchCache[searchTerm] = returnData;
@@ -41,6 +42,7 @@ export default class Chicago {
 
     let data = await fetch(dataRequestUrl);
     data = await data.json();
+    console.log(data)
 
     return data;
   }
