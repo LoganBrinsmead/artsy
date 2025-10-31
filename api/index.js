@@ -1,32 +1,29 @@
-import { MetAPI } from './MET';
-import { Chicago } from './Chicago';
+import MetAPI from './MET';
+import Chicago from './Chicago';
 
 class API {
-    constructor() {
-        this.apis = [ MetAPI, Chicago ]
-        this.dataCache = {};
-    }
+  constructor() {
+    this.apis = [
+      new MetAPI('https://collectionapi.metmuseum.org'),
+      // new Chicago(),
+    ];
+  }
 
-    async search(searchTerm) {
-        let data = [];
-        /*
-            In format
-            {
-                source: Metropolitan Museum Of Art,
-                data: array_of_objects
-            }
-        */
-        let currentData = {};
-        for(let i = 0; i < this.apis.length; i++) {
-            let api = new this.apis[i];
-            let curObjects = api.search(searchTerm);        // array of objects
-            let currentSource = api.name;
-            currentData["source"] = currentSource;
-            currentData["data"] = curObjects;
-
-            data[i] = currentData;
+  async search(searchTerm) {
+    const results = await Promise.all(
+      this.apis.map(async (api) => {
+        try {
+          const items = await api.search(searchTerm);
+          return Array.isArray(items)
+            ? items.map((it) => ({ ...it, source: api.name }))
+            : [];
+        } catch (_) {
+          return [];
         }
-
-        return data;
-    }
+      })
+    );
+    return results.flat();
+  }
 }
+const api = new API();
+export default api;
