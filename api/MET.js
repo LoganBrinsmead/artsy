@@ -24,7 +24,7 @@ export default class MetAPI {
         to get images, use this in conjunction with Object method
     */
     async objectIDsBySearchTerm(searchTerm) {
-        if (this.objectIDsBySearchTermCache[searchTerm]) return this.objectIDsBySearchTermCache[searchTerm];
+        if (searchTerm in this.objectIDsBySearchTermCache) return this.objectIDsBySearchTermCache[searchTerm];
 
         let searchFragment = `/public/collection/v1/search?hasImages=true&q="${searchTerm}"`;
 
@@ -42,7 +42,7 @@ export default class MetAPI {
         see documentation on website for more information
     */
     async getObject(objectID) {
-        if(this.objectCache[objectID]) return this.objectCache[objectID];
+        if(objectID in this.objectCache) return this.objectCache[objectID];
 
         let objectFragment = `/public/collection/v1/objects/${objectID}`;
 
@@ -59,7 +59,7 @@ export default class MetAPI {
         see documentation on website for more information
     */ 
     async search(searchTerm) {
-        if (this.searchCache[searchTerm]) return this.searchCache[searchTerm];
+        if (searchTerm in this.searchCache) return this.searchCache[searchTerm];
 
         const objectsArray = [];
 

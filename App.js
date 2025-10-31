@@ -7,6 +7,7 @@ import ArtworkPage from './components/ArtworkPage';
 import { useState } from 'react';
 import ArtworkCard from './components/ArtworkCard';
 import api from './api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 
@@ -87,9 +88,9 @@ export default function App() {
   // }
 
   return (
-    <View>
-      <Text>Test</Text>
-      
+    
+      <SafeAreaView>
+        <Text>test</Text>
     <NavigationContainer>
       <StatusBar style="auto" />
       <Stack.Navigator>
@@ -97,7 +98,8 @@ export default function App() {
         <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
       </Stack.Navigator>
     </NavigationContainer>
-    </View>
+
+      </SafeAreaView>
 
   );
 }

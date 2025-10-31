@@ -10,7 +10,7 @@ export default class Chicago {
   //  include image URL in the data for parsing
   // parse data out so it is extendable, create a parse function to do this.
   async search(searchTerm) {
-    if (this.objectsBySearchCache[searchTerm])
+    if (searchTerm in this.objectsBySearchCache)
       return this.objectsBySearchCache[searchTerm];
 
     let dataRequestUrl = baseURL + `/artworks/search?q=${searchTerm}`;
