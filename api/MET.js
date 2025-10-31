@@ -78,7 +78,6 @@ export default class MetAPI {
         let countRequests = 0;
         for (let i = 0; i < objectIDsBySearchTerm.length; i++) {
             const object = await this.getObject(objectIDsBySearchTerm[i]);
-            console.log(object);
             objectsArray[i] = this.formatOutput(object);
             countRequests++;
             if(countRequests % 30 === 0){
@@ -90,7 +89,6 @@ export default class MetAPI {
         }
 
         this.searchCache[searchTerm] = objectsArray;
-        console.log(this.searchCache[searchTerm]);
         
         return this.searchCache[searchTerm];
     }

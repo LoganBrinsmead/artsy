@@ -10,14 +10,15 @@ export default function ArtworkCard(props) {
   const countryOfOrigin = p?.countryOfOrigin || "Unknown country of origin.";
   const artist = p?.artist || "Artist Unknown";
   const description = p?.description || "No description available for this artwork.";
-  const department = p?.department || p?.source || "Unknown Department";
+  const department = p?.department || "Unknown Department";
   const imageStyle = p?.style || "Unknown style.";
+  const source = p?.source || "Unknown source";
 
   return (
     <View>
       <TouchableOpacity
         className="bg-white rounded-xl shadow-md overflow-hidden m-4"
-        onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, style: imageStyle })}
+        onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle })}
       >
         {imageURL ? (
           <Image
@@ -29,6 +30,7 @@ export default function ArtworkCard(props) {
         <View className="p-4">
           <Text className="text-lg font-semibold text-gray-900 mb-1">{title}</Text>
           <Text className="text-gray-600 text-sm">{artist}</Text>
+          <Text className="text-gray-300 text-sm">{source}</Text>
         </View>
       </TouchableOpacity>
     </View>

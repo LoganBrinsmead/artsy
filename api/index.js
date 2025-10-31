@@ -5,7 +5,7 @@ class API {
   constructor() {
     this.apis = [
       new MetAPI('https://collectionapi.metmuseum.org'),
-      // new Chicago(),
+      new Chicago(),
     ];
   }
 
@@ -17,7 +17,8 @@ class API {
           return Array.isArray(items)
             ? items.map((it) => ({ ...it, source: api.name }))
             : [];
-        } catch (_) {
+        } catch (e) {
+          console.log("Error: ", e);
           console.log(`Failed to fetch results from ${api.name}`);
           return [];
         }
