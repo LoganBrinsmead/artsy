@@ -69,12 +69,27 @@ export default class MetAPI {
             return this.searchCache[searchTerm];
         }
 
+        // This needs to be limited to 80 requests per second per request of the API
+        // TODO: Implement better rate limiting
+        // TODO: implement better error handling (what to do if the API fails / we get rate limited?)
+        // TODO: maybe implement a queue system to handle requests? (would have to be done throughout application)
+        // TODO: implement better caching system (cache objects, not just search term)
+        let countRequests = 0;
         for (let i = 0; i < objectIDsBySearchTerm.length; i++) {
             const object = await this.getObject(objectIDsBySearchTerm[i]);
+            console.log(object);
             objectsArray[i] = this.formatOutput(object);
+            countRequests++;
+            if(countRequests % 30 === 0){
+                console.log("Waiting...");
+                break;
+                // await new Promise(resolve => setTimeout(resolve, 10000));
+                // countRequests = 0;
+            }
         }
 
         this.searchCache[searchTerm] = objectsArray;
+        console.log(this.searchCache[searchTerm]);
         
         return this.searchCache[searchTerm];
     }

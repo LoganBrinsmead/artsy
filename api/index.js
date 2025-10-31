@@ -18,6 +18,7 @@ class API {
             ? items.map((it) => ({ ...it, source: api.name }))
             : [];
         } catch (_) {
+          console.log(`Failed to fetch results from ${api.name}`);
           return [];
         }
       })

@@ -23,7 +23,7 @@ export default class Chicago {
     for (let i = 0; i < data.length; i++) {
       let imageIdentifier = data[i]["id"];
       data[i] = this.formatOutput(data[i]);
-      data[i]["imageURL"] = getImageByID(imageIdentifier);
+      data[i]["imageURL"] = this.getImageByID(imageIdentifier);
     }
 
     this.objectsBySearchCache[searchTerm] = data;
