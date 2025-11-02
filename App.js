@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, ScrollView, Animated, Easing } from 'react-native';
+import { View, Text, Animated, Easing, FlatList } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ArtworkPage from './components/ArtworkPage';
@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import ArtworkCard from './components/ArtworkCard';
 import api from './api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Provider as PaperProvider, TextInput, Button } from 'react-native-paper';
+import { Provider as PaperProvider, TextInput, Button, MD3LightTheme } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "./global.css";
 
@@ -23,6 +23,13 @@ function SearchScreen({ navigation }) {
   const [placeholders] = useState(
     Array.from({ length: placeholderCount }, () => new Animated.Value(0))
   );
+  const [version, setVersion] = useState(0); // bump to force FlatList refresh when order changes
+
+  const renderItem = React.useCallback(({ item, index }) => (
+    <ArtworkCard navigation={navigation} {...item} />
+  ), [navigation]);
+
+  const keyExtractor = React.useCallback((item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`,[ ]);
 
   const performSearch = async () => {
     const trimmed = query.trim();
@@ -31,7 +38,9 @@ function SearchScreen({ navigation }) {
     setError('');
     try {
       const data = await api.search(trimmed);
-      setResults(Array.isArray(data) ? data : []);
+      const arr = Array.isArray(data) ? data : [];
+      setResults(arr);
+      setVersion(v => v + 1);
       
     } catch (e) {
       setError('Failed to fetch results.');
@@ -39,6 +48,13 @@ function SearchScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Debounce manual search if user taps quickly
+  const searchRef = React.useRef(null);
+  const onPressSearch = () => {
+    if (searchRef.current) clearTimeout(searchRef.current);
+    searchRef.current = setTimeout(() => performSearch(), 200);
   };
 
   // Staggered fade-in for loading skeletons
@@ -63,38 +79,48 @@ function SearchScreen({ navigation }) {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="px-6 py-6">
-          <Text className="text-3xl font-bold text-gray-900 mb-3">Search</Text>
-
-          <View className="flex-row items-center mt-1">
-            <View className="flex-1">
-              <TextInput
-                mode="outlined"
-                placeholder="Search for artworks…"
-                value={query}
-                onChangeText={setQuery}
-                onSubmitEditing={performSearch}
-                returnKeyType="search"
-              />
+      <View className="flex-1">
+        <FlatList
+          data={loading ? [] : results}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16, paddingTop: 8 }}
+          ListHeaderComponent={(
+            <View className="px-2 pb-3">
+              <Text className="text-3xl font-bold text-black mb-3">Search</Text>
+              <View className="flex-row items-center">
+                <View className="flex-1">
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Search for artworks…"
+                    value={query}
+                    onChangeText={setQuery}
+                    onSubmitEditing={performSearch}
+                    returnKeyType="search"
+                  />
+                </View>
+                <View className="w-3" />
+                <Button mode="contained" onPress={onPressSearch}>
+                  Search
+                </Button>
+              </View>
+              {error ? (
+                <Text className="text-red-600 mt-2">{error}</Text>
+              ) : null}
             </View>
-            <View className="w-3" />
-            <Button mode="contained" onPress={performSearch}>
-              Search
-            </Button>
-          </View>
-
-          {error ? (
-            <Text className="text-red-600 mt-2">{error}</Text>
-          ) : null}
-
-          {loading ? (
-            <View className="mt-2">
+          )}
+          ItemSeparatorComponent={() => <View className="h-6" />}
+          initialNumToRender={8}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          removeClippedSubviews
+          ListEmptyComponent={loading ? (
+            <View>
               {placeholders.map((opacity, i) => (
                 <Animated.View
                   key={`ph-${i}`}
                   style={{ opacity }}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden m-4"
+                  className="bg-white rounded-xl shadow-sm overflow-hidden mb-4"
                 >
                   <View className="w-full h-40 bg-gray-200" />
                   <View className="p-4">
@@ -105,17 +131,11 @@ function SearchScreen({ navigation }) {
               ))}
             </View>
           ) : (
-            <View className="mt-2">
-              {results?.map((item, idx) => (
-                <ArtworkCard key={idx} navigation={navigation} {...item} />
-              ))}
-              {!results?.length && (
-                <Text className="text-gray-500 px-4 py-6">No results yet. Try searching for Monet, Van Gogh, or Sunflowers.</Text>
-              )}
-            </View>
+            <Text className="text-gray-500 px-4 py-6">No results yet. Try searching for Monet, Van Gogh, or Sunflowers.</Text>
           )}
-        </View>
-      </ScrollView>
+          extraData={version}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -124,16 +144,21 @@ export default function App() {
   const [isLoading, setLoading] = useState(true);
   const [artObjects, setObjects] = useState([]); 
 
-  // async function getObjectsBySearchTerm(searchTerm) {
-  //   await api.search(searchTerm);
-  //   if(statusCode === "200") {
-  //     setLoading(false);
-  //     setObjects()
-  //   }
-  // }
+  const theme = {
+    ...MD3LightTheme,
+    colors: {
+      ...MD3LightTheme.colors,
+      primary: '#000000',
+      secondary: '#000000',
+      surface: '#ffffff',
+      background: '#ffffff',
+      onSurface: '#000000',
+      onBackground: '#000000',
+    },
+  };
 
   return (
-    <PaperProvider>
+    <PaperProvider theme={theme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer>
           <StatusBar style="auto" />

@@ -13,38 +13,47 @@ export default class Chicago {
     if (searchTerm in this.objectsBySearchCache)
       return this.objectsBySearchCache[searchTerm];
 
-    let dataRequestUrl = this.baseURL + `/artworks/search?q=${searchTerm}`;
-    console.log(dataRequestUrl);
+    const dataRequestUrl = this.baseURL + `/artworks/search?q=${encodeURIComponent(searchTerm)}`;
+    try {
+      let res = await this.fetchJson(dataRequestUrl);
+      const items = Array.isArray(res?.data) ? res.data : [];
 
-    // array of objects
-    let data = await fetch(dataRequestUrl);
-    data = await data.json();
-    data = data["data"];
-    let returnData = [];
+      // Cap to improve responsiveness
+      const MAX_OBJECTS = 60;
+      const ids = items.slice(0, MAX_OBJECTS).map((d) => d?.id).filter(Boolean);
 
+      // Batch requests in parallel with delays between batches
+      const BATCH_SIZE = 15;
+      const BATCH_DELAY_MS = 300;
+      const out = [];
+      for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+        const batch = ids.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (id) => {
+            try {
+              const currentObject = await this.getObjectByID(id);
+              return this.formatOutput(currentObject?.data);
+            } catch {
+              return null;
+            }
+          })
+        );
+        for (const r of batchResults) if (r) out.push(r);
+        if (i + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
+      }
 
-    // insert image URL into data and process data
-    for (let i = 0; data && i < data.length; i++) {
-      // console.log(data[i])
-      let currentObjectIdentifier = data[i]["id"];
-      let currentObject = await this.getObjectByID(currentObjectIdentifier);
-
-      returnData[i] = this.formatOutput(currentObject["data"]);
+      this.objectsBySearchCache[searchTerm] = out;
+      return this.objectsBySearchCache[searchTerm];
+    } catch (e) {
+      console.warn('AIC search failed:', e?.message || e);
+      this.objectsBySearchCache[searchTerm] = [];
+      return [];
     }
-
-    this.objectsBySearchCache[searchTerm] = returnData;
-
-    return this.objectsBySearchCache[searchTerm];
   }
 
   async getObjectByID(identifier) {
-    let dataRequestUrl = this.baseURL + `/artworks/${identifier}`;
-
-    let data = await fetch(dataRequestUrl);
-    data = await data.json();
-    console.log(data)
-
-    return data;
+    const dataRequestUrl = this.baseURL + `/artworks/${identifier}`;
+    return await this.fetchJson(dataRequestUrl);
   }
 
   getImageByID(identifier) {
@@ -63,17 +72,34 @@ export default class Chicago {
         for each API? 
     */
   formatOutput(data) {
-    let formattedObject = {
-      title: data["title"],
-      artist: data["artist_title"],
-      datePainted: data["date_end"],
-      countryOfOrigin: data["place_of_origin"],
-      description: data["description"],
-      department: data["department_title"],
-      style: data["style_title"],
-      imageURL: this.getImageByID(data["image_id"])
+    if (!data) return null;
+    return {
+      title: data["title"] || "Untitled",
+      artist: data["artist_title"] || "Artist Unknown",
+      datePainted: data["date_end"] || "",
+      countryOfOrigin: data["place_of_origin"] || "",
+      description: data["description"] || "No description available.",
+      department: data["department_title"] || "",
+      style: data["style_title"] || "",
+      imageURL: data["image_id"] ? this.getImageByID(data["image_id"]) : null,
     };
-
-    return formattedObject;
   }
+
+  // Helpers
+  async fetchJson(url, { timeoutMs = 8000 } = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
+      }
+      return await res.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 }
