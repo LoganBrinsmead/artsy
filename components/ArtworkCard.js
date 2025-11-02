@@ -1,36 +1,34 @@
-import { StatusBar } from "expo-status-bar";
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import "../global.css";
+import React from 'react';
+import { View, Text, Image } from "react-native";
+import { Card } from 'react-native-paper';
 
-export default function ArtworkCard(p) {
+function ArtworkCard(props) {
+  const navigation = props?.navigation;
   const p = props?.route?.params ?? props;
-  const imageURL = p?.imageURL || p?.uri || "Error loading artwork.";
+  const imageURL = p?.imageURL || p?.uri || "";
   const title = p?.title || "Untitled";
-  const datePainted = p?.datePained || "Unknown date.";
+  const datePainted = p?.datePainted || "Unknown date.";
   const countryOfOrigin = p?.countryOfOrigin || "Unknown country of origin.";
   const artist = p?.artist || "Artist Unknown";
-  const description =
-    p?.description || "No description available for this artwork.";
-  const department = p?.department || p?.source || "Unknown Department";
+  const description = p?.description || "No description available for this artwork.";
+  const department = p?.department || "Unknown Department";
   const imageStyle = p?.style || "Unknown style.";
+  const source = p?.source || "Unknown source";
 
   return (
     <View>
-      <TouchableOpacity className="bg-white rounded-xl shadow-md overflow-hidden m-4">
-        <Image
-          source={{
-            uri: { imageURL },
-          }}
-          className="w-full h-40"
-          resizeMode="cover"
-        />
+      <Card className="rounded-xl overflow-hidden bg-white" onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle })}>
+        {imageURL ? (
+          <Image source={{ uri: imageURL }} className="w-full h-40" resizeMode="cover" />
+        ) : null}
         <View className="p-4">
-          <Text className="text-lg font-semibold text-gray-900 mb-1">
-            {title}
-          </Text>
-          <Text className="text-gray-600 text-sm">{artist}</Text>
+          <Text className="text-lg font-semibold text-black mb-1">{title}</Text>
+          <Text className="text-black/70 text-sm">{artist}</Text>
+          <Text className="text-black/40 text-xs mt-0.5">{source}</Text>
         </View>
-      </TouchableOpacity>{" "}
+      </Card>
     </View>
   );
 }
+
+export default React.memo(ArtworkCard);

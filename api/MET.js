@@ -7,7 +7,7 @@
     data is stored and returned in format:
 
     data["data"]: contains the JSON data for the image
-    data["imageURL"]: contains IIIF URL forr image
+    data["imageURL"]: contains IIIF URL for image
 */
 
 export default class MetAPI {
@@ -24,75 +24,118 @@ export default class MetAPI {
         to get images, use this in conjunction with Object method
     */
     async objectIDsBySearchTerm(searchTerm) {
-        if (this.objectIDsBySearchTermCache[searchTerm]) return this.objectIDsBySearchTermCache[searchTerm];
+        if (searchTerm in this.objectIDsBySearchTermCache) return this.objectIDsBySearchTermCache[searchTerm];
 
-        let searchFragment = `/public/collection/v1/search?hasImages=true&q="${searchTerm}"`;
-
-        let data = await fetch(this.baseUrl + searchFragment);
-
-        let processedData = await data.json();
-
-        this.objectIDsBySearchTermCache[searchTerm] = processedData["objectIDs"];
+        const searchFragment = `/public/collection/v1/search?hasImages=true&q="${encodeURIComponent(searchTerm)}"`;
+        const url = this.baseUrl + searchFragment;
+        try {
+            const res = await this.fetchJson(url);
+            const ids = Array.isArray(res?.objectIDs) ? res.objectIDs : [];
+            this.objectIDsBySearchTermCache[searchTerm] = ids;
+        } catch (e) {
+            console.warn('MET search failed:', e?.message || e);
+            this.objectIDsBySearchTermCache[searchTerm] = [];
+        }
 
         return this.objectIDsBySearchTermCache[searchTerm];
-
     }
 
     /*
         Returns images, description, and more according to ID for object
         see documentation on website for more information
     */
-   async getObject(objectID) {
-        if(this.objectCache[objectID]) return this.objectCache[objectID];
+    async getObject(objectID) {
+        if(objectID in this.objectCache) return this.objectCache[objectID];
 
-        let objectFragment = `/public/collection/v1/objects/${objectID}`;
+        const objectFragment = `/public/collection/v1/objects/${objectID}`;
+        const url = this.baseUrl + objectFragment;
+        try {
+            const data = await this.fetchJson(url);
+            this.objectCache[objectID] = data;
+            return this.objectCache[objectID];
+        } catch (e) {
+            console.warn('MET getObject failed:', objectID, e?.message || e);
+            throw e;
+        }
+    }
 
-        let data = await fetch(this.baseUrl + objectFragment);
+    /* returns array of json objects of image data according to search term
+        see documentation on website for more information
+    */ 
+    async search(searchTerm) {
+        if (searchTerm in this.searchCache) return this.searchCache[searchTerm];
 
-        let processedData = data.json();
+        const results = [];
 
-        this.objectCache[objectID] = processedData;
-
-        return this.objectCache[objectID];
-   }
-
-   /* returns array of json objects of image data according to search term
-      see documentation on website for more information
-   */ 
-   async search(searchTerm) {
-        if (this.searchCache[searchTerm]) return this.searchCache[searchTerm];
-
-        let objectsArray = [];
-
-
-        let objectIDsBySearchTerm = await this.objectIDsBySearchTerm(searchTerm);
-
-        for(let i = 0; i < objectIDsBySearchTerm.length; i++) {
-            let object = await this.getObject(objectIDsBySearchTerm[i])
-            objectsArray[i] = this.formatData(object);
+        const objectIDsBySearchTerm = await this.objectIDsBySearchTerm(searchTerm);
+        if (!objectIDsBySearchTerm || objectIDsBySearchTerm.length === 0) {
+            this.searchCache[searchTerm] = [];
+            return this.searchCache[searchTerm];
         }
 
-        this.searchCache[searchTerm] = objectsArray;
+        // Cap total fetched objects for responsiveness
+        const MAX_OBJECTS = 60; // adjust as needed
+        const ids = objectIDsBySearchTerm.slice(0, MAX_OBJECTS);
+
+        // Rate limit: process in batches to stay well under 80 req/sec
+        const BATCH_SIZE = 15;
+        const BATCH_DELAY_MS = 300; // 15*3 batches/sec ~45 rps max
+        for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+            const batch = ids.slice(i, i + BATCH_SIZE);
+            const batchResults = await Promise.all(
+                batch.map(async (id) => {
+                    try {
+                        const obj = await this.getObject(id);
+                        return this.formatOutput(obj);
+                    } catch (e) {
+                        return null;
+                    }
+                })
+            );
+            for (const r of batchResults) if (r) results.push(r);
+            if (i + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
+        }
+
+        this.searchCache[searchTerm] = results;
         
-        return this.searchCache;
-   }
+        return this.searchCache[searchTerm];
+    }
 
-   /* Formats objects to be processed in index.js
-      Example object: https://collectionapi.metmuseum.org/public/collection/v1/objects/437133
+    /* Formats objects to be processed in index.js
+        Example object: https://collectionapi.metmuseum.org/public/collection/v1/objects/437133
 
-   */
-  formatOutput(data) {
-    let formattedObject = {
-      title: data["title"],
-      imageURL: data["primaryImage"],
-      artist: data["artistDisplayName"],
-      datePainted: data["objectDate"],
-      countryOfOrigin: data["artistNationality"],
-      description: "No description available.",
-      department: data["department"],
-      style: "No style (e.g. contemporary) available.",
-    };
+    */
+    formatOutput(data) {
+        if (!data) return null;
+        return {
+            title: data["title"] || "Untitled",
+            imageURL: data["primaryImage"] || data["primaryImageSmall"] || null,
+            artist: data["artistDisplayName"] || "Artist Unknown",
+            datePainted: data["objectDate"] || "",
+            countryOfOrigin: data["artistNationality"] || "",
+            description: data["creditLine"] || "No description available.",
+            department: data["department"] || "",
+            style: "No style (e.g. contemporary) available.",
+        };
+    }
 
-    return formattedObject;
-  }
+    // Helpers
+    async fetchJson(url, { timeoutMs = 8000 } = {}) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            if (!res.ok) {
+                const text = await res.text().catch(() => '');
+                throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
+            }
+            return await res.json();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
 }

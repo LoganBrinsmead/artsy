@@ -1,7 +1,7 @@
 export default class Chicago {
   constructor() {
     this.name = "Art Institute of Chicago";
-    this.baseURL = "https://api.artic.edu/api/v1/";
+    this.baseURL = "https://api.artic.edu/api/v1";
     this.objectsBySearchCache = {};
     this.iifURL = "https://www.artic.edu/iiif/2";
   }
@@ -10,29 +10,55 @@ export default class Chicago {
   //  include image URL in the data for parsing
   // parse data out so it is extendable, create a parse function to do this.
   async search(searchTerm) {
-    if (this.objectsBySearchCache[searchTerm])
+    if (searchTerm in this.objectsBySearchCache)
       return this.objectsBySearchCache[searchTerm];
 
-    let dataRequestUrl = baseURL + `/artworks/search?q=${searchTerm}`;
+    const dataRequestUrl = this.baseURL + `/artworks/search?q=${encodeURIComponent(searchTerm)}`;
+    try {
+      let res = await this.fetchJson(dataRequestUrl);
+      const items = Array.isArray(res?.data) ? res.data : [];
 
-    // array of objects
-    let data = await fetch(dataRequestUrl);
-    data = data["data"];
+      // Cap to improve responsiveness
+      const MAX_OBJECTS = 60;
+      const ids = items.slice(0, MAX_OBJECTS).map((d) => d?.id).filter(Boolean);
 
-    // insert image URL into data and process data
-    for (let i = 0; i < data.length; i++) {
-      let imageIdentifier = data[i]["id"];
-      data[i] = this.formatOutput(data[i]);
-      data[i]["imageURL"] = getImageByID(imageIdentifier);
+      // Batch requests in parallel with delays between batches
+      const BATCH_SIZE = 15;
+      const BATCH_DELAY_MS = 300;
+      const out = [];
+      for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+        const batch = ids.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (id) => {
+            try {
+              const currentObject = await this.getObjectByID(id);
+              return this.formatOutput(currentObject?.data);
+            } catch {
+              return null;
+            }
+          })
+        );
+        for (const r of batchResults) if (r) out.push(r);
+        if (i + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
+      }
+
+      this.objectsBySearchCache[searchTerm] = out;
+      return this.objectsBySearchCache[searchTerm];
+    } catch (e) {
+      console.warn('AIC search failed:', e?.message || e);
+      this.objectsBySearchCache[searchTerm] = [];
+      return [];
     }
+  }
 
-    this.objectsBySearchCache[searchTerm] = data;
-
-    return this.objectsBySearchCache[searchTerm];
+  async getObjectByID(identifier) {
+    const dataRequestUrl = this.baseURL + `/artworks/${identifier}`;
+    return await this.fetchJson(dataRequestUrl);
   }
 
   getImageByID(identifier) {
-    return `https://www.artic.edu/iiif/2/${identifier}/full/843,/0/default.jpg`;
+    let imageURL = `https://www.artic.edu/iiif/2/${identifier}/full/843,/0/default.jpg`;
+    return imageURL;
   }
 
   /*
@@ -46,16 +72,34 @@ export default class Chicago {
         for each API? 
     */
   formatOutput(data) {
-    let formattedObject = {
-      title: data["title"],
-      artist: data["artist_title"],
-      datePainted: data["date_end"],
-      countryOfOrigin: data["place_of_origin"],
-      description: data["description"],
-      department: data["department_title"],
-      style: data["style_title"],
+    if (!data) return null;
+    return {
+      title: data["title"] || "Untitled",
+      artist: data["artist_title"] || "Artist Unknown",
+      datePainted: data["date_end"] || "",
+      countryOfOrigin: data["place_of_origin"] || "",
+      description: data["description"] || "No description available.",
+      department: data["department_title"] || "",
+      style: data["style_title"] || "",
+      imageURL: data["image_id"] ? this.getImageByID(data["image_id"]) : null,
     };
-
-    return formattedObject;
   }
+
+  // Helpers
+  async fetchJson(url, { timeoutMs = 8000 } = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
+      }
+      return await res.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 }
