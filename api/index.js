@@ -14,6 +14,7 @@ function filterItemsWithImages(items) {
   });
 }
 
+// TODO: internal caching of results and method of returning cached results results in redundant searches and stale content.
 class API {
   constructor() {
     this.apis = [

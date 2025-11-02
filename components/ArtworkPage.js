@@ -15,6 +15,8 @@ export default function ArtworkPage(props) {
 
   const [modalVisible, setModalVisible] = useState(false);
   // persistent zoom model: baseScale * pinchScale
+  // TODO: buggy implementation, resets to where your finger presses down if you're zoomed in. makes for awkward experience
+  // TODO: implement double tap to zoom in
   const baseScale = useRef(new Animated.Value(1)).current;
   const pinchScale = useRef(new Animated.Value(1)).current;
   const scale = Animated.multiply(baseScale, pinchScale);
