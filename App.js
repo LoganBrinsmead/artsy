@@ -1,13 +1,16 @@
+import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Animated, Easing } from 'react-native';
+import { View, Text, ScrollView, Animated, Easing } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import "./global.css";
 import ArtworkPage from './components/ArtworkPage';
 import React, { useState } from 'react';
 import ArtworkCard from './components/ArtworkCard';
 import api from './api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Provider as PaperProvider, TextInput, Button } from 'react-native-paper';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import "./global.css";
 
 const Stack = createNativeStackNavigator();
 
@@ -61,31 +64,30 @@ function SearchScreen({ navigation }) {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="px-6 py-6 gap-4">
-          <Text className="text-3xl font-bold text-gray-900">Search</Text>
+        <View className="px-6 py-6">
+          <Text className="text-3xl font-bold text-gray-900 mb-3">Search</Text>
 
-          <View className="flex-row items-center gap-3">
-            <TextInput
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-3"
-              placeholder="Search for artworks…"
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={performSearch}
-              returnKeyType="search"
-            />
-            <TouchableOpacity
-              className="bg-indigo-600 rounded-lg px-5 py-3"
-              onPress={performSearch}
-            >
-              <Text className="text-white font-semibold">Search</Text>
-            </TouchableOpacity>
+          <View className="flex-row items-center mt-1">
+            <View className="flex-1">
+              <TextInput
+                mode="outlined"
+                placeholder="Search for artworks…"
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={performSearch}
+                returnKeyType="search"
+              />
+            </View>
+            <View className="w-3" />
+            <Button mode="contained" onPress={performSearch}>
+              Search
+            </Button>
           </View>
 
           {error ? (
-            <Text className="text-red-600">{error}</Text>
+            <Text className="text-red-600 mt-2">{error}</Text>
           ) : null}
 
-          {/* Loading skeletons with staggered fade-in */}
           {loading ? (
             <View className="mt-2">
               {placeholders.map((opacity, i) => (
@@ -95,8 +97,8 @@ function SearchScreen({ navigation }) {
                   className="bg-white rounded-xl shadow-sm overflow-hidden m-4"
                 >
                   <View className="w-full h-40 bg-gray-200" />
-                  <View className="p-4 gap-2">
-                    <View className="h-4 bg-gray-200 rounded w-1/2" />
+                  <View className="p-4">
+                    <View className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
                     <View className="h-3 bg-gray-200 rounded w-1/3" />
                   </View>
                 </Animated.View>
@@ -131,13 +133,17 @@ export default function App() {
   // }
 
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      <Stack.Navigator initialRouteName="Search">
-        <Stack.Screen name="Search" component={SearchScreen} />
-        <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <PaperProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          <Stack.Navigator initialRouteName="Search">
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </GestureHandlerRootView>
+    </PaperProvider>
 
   );
 }

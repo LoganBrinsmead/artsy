@@ -1,5 +1,5 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import "../global.css";
+import { View, Text, Image } from "react-native";
+import { Card } from 'react-native-paper';
 
 export default function ArtworkCard(props) {
   const navigation = props?.navigation;
@@ -16,23 +16,16 @@ export default function ArtworkCard(props) {
 
   return (
     <View>
-      <TouchableOpacity
-        className="bg-white rounded-xl shadow-md overflow-hidden m-4"
-        onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle })}
-      >
+      <Card className="rounded-xl overflow-hidden m-4" onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle })}>
         {imageURL ? (
-          <Image
-            source={{ uri: imageURL }}
-            className="w-full h-40"
-            resizeMode="cover"
-          />
+          <Image source={{ uri: imageURL }} className="w-full h-40" resizeMode="cover" />
         ) : null}
         <View className="p-4">
           <Text className="text-lg font-semibold text-gray-900 mb-1">{title}</Text>
           <Text className="text-gray-600 text-sm">{artist}</Text>
-          <Text className="text-gray-300 text-sm">{source}</Text>
+          <Text className="text-gray-400 text-xs mt-0.5">{source}</Text>
         </View>
-      </TouchableOpacity>
+      </Card>
     </View>
   );
 }
