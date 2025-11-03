@@ -1,8 +1,9 @@
+import { EUROPEANA_API_KEY } from '@env';
 
 export default class Europeana {
     constructor() {
         this.baseURL = "https://api.europeana.eu/record/v2";
-        this.apiKey = 'keyhere';
+        this.apiKey = EUROPEANA_API_KEY;
         this.objectsBySearchCache = {};
     }
 
