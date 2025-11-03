@@ -82,6 +82,7 @@ export default class Chicago {
       department: data["department_title"] || "",
       style: data["style_title"] || "",
       imageURL: data["image_id"] ? this.getImageByID(data["image_id"]) : null,
+      source: "Art Institute of Chicago",
     };
   }
 

@@ -116,6 +116,7 @@ export default class MetAPI {
             description: data["creditLine"] || "No description available.",
             department: data["department"] || "",
             style: "No style (e.g. contemporary) available.",
+            source: "The Metropolitan Museum of Art",
         };
     }
 

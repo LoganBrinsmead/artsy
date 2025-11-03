@@ -1,5 +1,6 @@
 import MetAPI from './MET';
 import Chicago from './Chicago';
+import Europeana from './Europeana';
 
 // Filters out items that do not contain a usable image URL
 function filterItemsWithImages(items) {
@@ -20,6 +21,7 @@ class API {
     this.apis = [
       new MetAPI('https://collectionapi.metmuseum.org'),
       new Chicago(),
+      new Europeana(),
     ];
   }
 
@@ -29,7 +31,7 @@ class API {
         try {
           const items = await api.search(searchTerm);
           return Array.isArray(items)
-            ? items.map((it) => ({ ...it, source: api.name }))
+            ? items.map((it) => ({ ...it }))
             : [];
         } catch (e) {
           console.log("Error: ", e);
