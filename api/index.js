@@ -1,5 +1,6 @@
 import MetAPI from './MET';
 import Chicago from './Chicago';
+import Harvard from './Harvard';
 
 // Filters out items that do not contain a usable image URL
 function filterItemsWithImages(items) {
@@ -20,6 +21,7 @@ class API {
     this.apis = [
       new MetAPI('https://collectionapi.metmuseum.org'),
       new Chicago(),
+      new Harvard(),
     ];
   }
 
