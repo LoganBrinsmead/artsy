@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, Animated, Easing, FlatList } from 'react-native';
+import { View, Text, Animated, Easing, FlatList, Pressable } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ArtworkPage from './components/ArtworkPage';
@@ -10,6 +10,10 @@ import api from './api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Provider as PaperProvider, TextInput, Button, MD3LightTheme } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Highlight from './components/Highlight';
+import Discover from './components/Discover';
+import Favorites from './components/Favorites';
+import Profile from './components/Profile';
 import "./global.css";
 
 const Stack = createNativeStackNavigator();
@@ -140,6 +144,50 @@ function SearchScreen({ navigation }) {
   );
 }
 
+function HomeScreen({ navigation }) {
+  const [tab, setTab] = useState('Highlight');
+
+  const renderTab = () => {
+    switch (tab) {
+      case 'Highlight':
+        return <Highlight />;
+      case 'Search':
+        return <SearchScreen navigation={navigation} />;
+      case 'Discover':
+        return <Discover />;
+      case 'Favorites':
+        return <Favorites />;
+      case 'Profile':
+        return <Profile />;
+      default:
+        return <Highlight />;
+    }
+  };
+
+  const TabButton = ({ label }) => (
+    <Pressable onPress={() => setTab(label)} style={{ flex: 1, paddingVertical: 10 }}>
+      <Text className={`text-center ${tab === label ? 'text-black font-bold' : 'text-gray-500'}`}>{label}</Text>
+    </Pressable>
+  );
+
+  return (
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1">
+        {renderTab()}
+      </View>
+      <View className="border-t border-gray-200 bg-white">
+        <View className="flex-row">
+          <TabButton label="Highlight" />
+          <TabButton label="Search" />
+          <TabButton label="Discover" />
+          <TabButton label="Favorites" />
+          <TabButton label="Profile" />
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function App() {
   const [isLoading, setLoading] = useState(true);
   const [artObjects, setObjects] = useState([]); 
@@ -162,8 +210,8 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer>
           <StatusBar style="auto" />
-          <Stack.Navigator initialRouteName="Search">
-            <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Navigator initialRouteName="Home">
+            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
           </Stack.Navigator>
         </NavigationContainer>
