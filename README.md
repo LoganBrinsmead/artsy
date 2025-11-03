@@ -15,3 +15,4 @@ Planned features:
 - Browse by artist, museum/artwork source, or artwork type.
 - More artwork sources: planned currently is Europeana and Harvard Art Museums.
 - lists of trending artworks, most liked artworks, most viewed, etc. 
+- daily artwork/artist showcases with selected artworks from specific artists
