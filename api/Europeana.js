@@ -1,7 +1,8 @@
+
 export default class Europeana {
     constructor() {
-        this.baseURL = "https://api.europeana.eu/record/v2/";
-        this.apiKey = process.env.EUROPEANA_API_KEY;
+        this.baseURL = "https://api.europeana.eu/record/v2";
+        this.apiKey = 'keyhere';
         console.log(this.apiKey);
         this.objectsBySearchCache = {};
     }
@@ -9,15 +10,26 @@ export default class Europeana {
     async search(searchTerm) {
         if (searchTerm in this.objectsBySearchCache) return this.objectsBySearchCache[searchTerm];
 
-        const dataRequestUrl = this.baseURL + `/search.json?wskey=${this.apiKey}&query=${encodeURIComponent(searchTerm)}~`;
+        let dataRequestUrl = this.baseURL + `/search.json?wskey=${this.apiKey}&query=${encodeURIComponent(searchTerm)}~`;
         try {
+            console.log(dataRequestUrl);
 
-            let res = await this.fetchJson(dataRequestUrl);
-            const items = Array.isArray(res?.data) ? res.data : [];
+            let res = await fetch(dataRequestUrl);
+            let items = await res.json();
+
+            items = Array.isArray(items["items"]) ? items["items"] : [];
+           console.log(items); 
+            console.log("I am here");
             this.objectsBySearchCache[searchTerm] = items;
 
-            const formattedItems = items.map(this.formatOutput);
-            return formattedItems;
+            for(let i = 0; i < items.length; i++) {
+                console.log(`item ${i}: ${items[i]}`);
+                items[i] = this.formatOutput(items[i]);
+            }
+
+            // let formattedItems = items.map(this.formatOutput);
+            console.log(items);
+            return items;
             
         } catch (e) {
 
@@ -46,15 +58,15 @@ export default class Europeana {
     formatOutput(data) {
         if (!data) return null;
         return {
-            title: data["title"] || "Untitled",
-            imageURL: data["edmIsShownBy"] || null,
+            title: data["title"][0] || "Untitled",
+            imageURL: data["edmIsShownBy"][0] || null,
             artist: data["artistDisplayName"] || "Artist Unknown",
             datePainted: data["objectDate"] || "",
-            countryOfOrigin: data["country"] || "",
-            description: data["creditLine"] || "No description available.",
+            countryOfOrigin: data["country"][0] || "",
+            description: data["creditLine"][0] || "No description available.",
             department: data["department"] || "",
-            style: data["edmConceptLabel"][9] ||"No style (e.g. contemporary) available.",
-            source: data["dataProvider"] || "Europeana",
+            style: data["edmConceptLabel"][0] ||"No style (e.g. contemporary) available.",
+            source: data["dataProvider"][0] || "Europeana",
         }
     }
 }
