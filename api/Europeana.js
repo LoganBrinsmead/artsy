@@ -12,7 +12,6 @@ export default class Europeana {
 
         let dataRequestUrl = this.baseURL + `/search.json?wskey=${this.apiKey}&query=${encodeURIComponent(searchTerm)}~`;
         try {
-            console.log(dataRequestUrl);
 
             let res = await fetch(dataRequestUrl);
             let items = await res.json();
@@ -24,7 +23,6 @@ export default class Europeana {
                 items[i] = this.formatOutput(items[i]);
             }
 
-            // let formattedItems = items.map(this.formatOutput);
             return items;
             
         } catch (e) {
@@ -53,17 +51,24 @@ export default class Europeana {
 
     formatOutput(data) {
         if (!data) return null;
+        
+        // Helper function to extract value from array if needed
+        const getValue = (value, defaultValue) => {
+            if (value === undefined || value === null) return defaultValue;
+            return Array.isArray(value) ? (value[0] || defaultValue) : value;
+        };
+        
         return {
-            title: data["title"] || "Untitled",
-            imageURL: data["edmIsShownBy"] || null,
-            artist: data["artistDisplayName"] || "Artist Unknown",
-            datePainted: data["objectDate"] || "",
-            countryOfOrigin: data["country"] || "",
-            description: data["creditLine"] || "No description available.",
-            department: data["department"] || "",
-            // style: data["edmConceptLabel"] ||"No style (e.g. contemporary) available.",
+            title: getValue(data["title"], "Untitled"),
+            imageURL: getValue(data["edmIsShownBy"], null),
+            artist: getValue(data["artistDisplayName"], "Artist Unknown"),
+            datePainted: getValue(data["objectDate"], ""),
+            countryOfOrigin: getValue(data["country"], ""),
+            description: getValue(data["creditLine"], "No description available."),
+            department: getValue(data["department"], ""),
+            // style: getValue(data["edmConceptLabel"], "No style (e.g. contemporary) available."),
             style: "No style (e.g. contemporary) available. (Europeana needs style parsing!)",
-            source: data["dataProvider"] || "Europeana",
+            source: getValue(data["dataProvider"], "Europeana"),
         }
     }
 }
