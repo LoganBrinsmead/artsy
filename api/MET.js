@@ -11,12 +11,15 @@
 */
 
 export default class MetAPI {
-    constructor(baseUrl) {
-        this.baseUrl = baseUrl;
+    constructor(cacheTTL = 5 * 60 * 1000) {
+        this.baseUrl = "https://collectionapi.metmuseum.org";
         this.name = "The Metropolitan Museum of Art";
-        this.searchCache = {};   // searchCache[searchTerm] = [array of image URLs for associated search term]
-        this.objectIDsBySearchTermCache = {}; // objectIDsBySearchTermCache[searchTerm] = [array of object IDs]
+        // Cache with TTL: { data: [...], timestamp: Date.now() }
+        this.searchCache = {};   
+        this.objectIDsBySearchTermCache = {}; 
         this.objectCache = {};
+        // Cache TTL: configurable, defaults to 5 minutes (300000 ms)
+        this.CACHE_TTL = cacheTTL;
     }
 
     /*
@@ -24,20 +27,30 @@ export default class MetAPI {
         to get images, use this in conjunction with Object method
     */
     async objectIDsBySearchTerm(searchTerm) {
-        if (searchTerm in this.objectIDsBySearchTermCache) return this.objectIDsBySearchTermCache[searchTerm];
+        // Check cache with TTL
+        const cached = this.objectIDsBySearchTermCache[searchTerm];
+        if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+            return cached.data;
+        }
 
         const searchFragment = `/public/collection/v1/search?hasImages=true&q="${encodeURIComponent(searchTerm)}"`;
         const url = this.baseUrl + searchFragment;
         try {
             const res = await this.fetchJson(url);
             const ids = Array.isArray(res?.objectIDs) ? res.objectIDs : [];
-            this.objectIDsBySearchTermCache[searchTerm] = ids;
+            this.objectIDsBySearchTermCache[searchTerm] = {
+                data: ids,
+                timestamp: Date.now()
+            };
         } catch (e) {
             console.warn('MET search failed:', e?.message || e);
-            this.objectIDsBySearchTermCache[searchTerm] = [];
+            this.objectIDsBySearchTermCache[searchTerm] = {
+                data: [],
+                timestamp: Date.now()
+            };
         }
 
-        return this.objectIDsBySearchTermCache[searchTerm];
+        return this.objectIDsBySearchTermCache[searchTerm].data;
     }
 
     /*
@@ -45,14 +58,21 @@ export default class MetAPI {
         see documentation on website for more information
     */
     async getObject(objectID) {
-        if(objectID in this.objectCache) return this.objectCache[objectID];
+        // Check cache with TTL
+        const cached = this.objectCache[objectID];
+        if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+            return cached.data;
+        }
 
         const objectFragment = `/public/collection/v1/objects/${objectID}`;
         const url = this.baseUrl + objectFragment;
         try {
             const data = await this.fetchJson(url);
-            this.objectCache[objectID] = data;
-            return this.objectCache[objectID];
+            this.objectCache[objectID] = {
+                data: data,
+                timestamp: Date.now()
+            };
+            return this.objectCache[objectID].data;
         } catch (e) {
             console.warn('MET getObject failed:', objectID, e?.message || e);
             throw e;
@@ -63,14 +83,21 @@ export default class MetAPI {
         see documentation on website for more information
     */ 
     async search(searchTerm) {
-        if (searchTerm in this.searchCache) return this.searchCache[searchTerm];
+        // Check cache with TTL
+        const cached = this.searchCache[searchTerm];
+        if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+            return cached.data;
+        }
 
         const results = [];
 
         const objectIDsBySearchTerm = await this.objectIDsBySearchTerm(searchTerm);
         if (!objectIDsBySearchTerm || objectIDsBySearchTerm.length === 0) {
-            this.searchCache[searchTerm] = [];
-            return this.searchCache[searchTerm];
+            this.searchCache[searchTerm] = {
+                data: [],
+                timestamp: Date.now()
+            };
+            return this.searchCache[searchTerm].data;
         }
 
         // Cap total fetched objects for responsiveness
@@ -96,9 +123,12 @@ export default class MetAPI {
             if (i + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
         }
 
-        this.searchCache[searchTerm] = results;
+        this.searchCache[searchTerm] = {
+            data: results,
+            timestamp: Date.now()
+        };
         
-        return this.searchCache[searchTerm];
+        return this.searchCache[searchTerm].data;
     }
 
     /* Formats objects to be processed in index.js
@@ -108,6 +138,7 @@ export default class MetAPI {
     formatOutput(data) {
         if (!data) return null;
         return {
+            externalId: data["objectID"] ? String(data["objectID"]) : null,
             title: data["title"] || "Untitled",
             imageURL: data["primaryImage"] || data["primaryImageSmall"] || null,
             artist: data["artistDisplayName"] || "Artist Unknown",
@@ -137,5 +168,42 @@ export default class MetAPI {
 
     sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Clear all caches
+     */
+    clearCache() {
+        this.searchCache = {};
+        this.objectIDsBySearchTermCache = {};
+        this.objectCache = {};
+    }
+
+    /**
+     * Clear expired cache entries
+     */
+    clearExpiredCache() {
+        const now = Date.now();
+        
+        // Clear expired search cache
+        Object.keys(this.searchCache).forEach(key => {
+            if (now - this.searchCache[key].timestamp >= this.CACHE_TTL) {
+                delete this.searchCache[key];
+            }
+        });
+        
+        // Clear expired object IDs cache
+        Object.keys(this.objectIDsBySearchTermCache).forEach(key => {
+            if (now - this.objectIDsBySearchTermCache[key].timestamp >= this.CACHE_TTL) {
+                delete this.objectIDsBySearchTermCache[key];
+            }
+        });
+        
+        // Clear expired object cache
+        Object.keys(this.objectCache).forEach(key => {
+            if (now - this.objectCache[key].timestamp >= this.CACHE_TTL) {
+                delete this.objectCache[key];
+            }
+        });
     }
 }

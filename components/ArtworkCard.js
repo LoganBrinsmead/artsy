@@ -14,10 +14,11 @@ function ArtworkCard(props) {
   const department = p?.department || "Unknown Department";
   const imageStyle = p?.style || "Unknown style.";
   const source = p?.source || "Unknown source";
+  const externalId = p?.externalId || imageURL; // fallback to imageURL as unique identifier
 
   return (
     <View>
-      <Card className="rounded-xl overflow-hidden bg-white" onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle })}>
+      <Card className="rounded-xl overflow-hidden bg-white" onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle, externalId })}>
         {imageURL ? (
           <Image source={{ uri: imageURL }} className="w-full h-40" resizeMode="cover" />
         ) : null}
