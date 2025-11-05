@@ -1,9 +1,14 @@
 # Artsy
 
-This is a react-native application that is meant as an open-source center for collecting and appreciating art and art history from multiple museums and other sources. With an easily extendable API it's simple to add new artwork sources to Artsy.
+Artsy is an open-source mobile application for consolidating artwork from multiple museums and other sources to study and appreciate visual arts and remember art history. With an easily extendable API, it's simple to add more artwork sources and collections to Artsy.
+
 
 ![image0](https://github.com/user-attachments/assets/7ea1263a-8b9c-40de-9b1e-d985d76d0d04)
 
+Currently showcased museums:
+- The Art Institute of Chicago
+- The Metropolitan Museum of Art
+- Harvard Art Museums
 
 This application is still under development but an early-build MVP is available under the main branch.
 
