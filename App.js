@@ -10,7 +10,7 @@ import api from './api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Provider as PaperProvider, TextInput, Button, MD3LightTheme } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Highlight from './components/Highlight';
+import Showcase from './components/Showcase';
 import Discover from './components/Discover';
 import Favorites from './components/Favorites';
 import Profile from './components/Profile';
@@ -147,22 +147,22 @@ function SearchScreen({ navigation }) {
 }
 
 function HomeScreen({ navigation }) {
-  const [tab, setTab] = useState('Highlight');
+  const [tab, setTab] = useState('Showcase');
 
   const renderTab = () => {
     switch (tab) {
-      case 'Highlight':
-        return <Highlight />;
+      case 'Showcase':
+        return <Showcase navigation={navigation} />;
       case 'Search':
         return <SearchScreen navigation={navigation} />;
       case 'Discover':
-        return <Discover />;
+        return <Discover navigation={navigation} />;
       case 'Favorites':
         return <Favorites navigation={navigation} />;
       case 'Profile':
         return <Profile navigation={navigation} />;
       default:
-        return <Highlight />;
+        return <Showcase navigation={navigation} />;
     }
   };
 
@@ -179,7 +179,7 @@ function HomeScreen({ navigation }) {
       </View>
       <View className="border-t border-gray-200 bg-white">
         <View className="flex-row">
-          <TabButton label="Highlight" />
+          <TabButton label="Showcase" />
           <TabButton label="Search" />
           <TabButton label="Discover" />
           <TabButton label="Favorites" />
