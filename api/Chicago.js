@@ -74,6 +74,7 @@ export default class Chicago {
   formatOutput(data) {
     if (!data) return null;
     return {
+      externalId: data["id"] ? String(data["id"]) : null,
       title: data["title"] || "Untitled",
       artist: data["artist_title"] || "Artist Unknown",
       datePainted: data["date_end"] || "",

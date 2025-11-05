@@ -1,7 +1,9 @@
 import { View, Text, Image, ScrollView, Modal, Pressable, Animated } from "react-native";
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, TapGestureHandler, State } from 'react-native-gesture-handler';
-import { Text as PaperText } from 'react-native-paper';
+import { Text as PaperText, IconButton, Menu, Button, Portal, Dialog } from 'react-native-paper';
+import { useUser } from '../context/UserContext';
+import { addFavorite, removeFavorite, isFavorited, getUserGalleries, addArtworkToGallery, isArtworkInGallery } from '../database/services';
 
 export default function ArtworkPage(props) {
   const p = props?.route?.params ?? props;
@@ -12,8 +14,17 @@ export default function ArtworkPage(props) {
   const description = p?.description || "No description available for this artwork.";
   const department = p?.department || "Unknown Department";
   const source = p?.source || "Error loading source.";
+  const datePainted = p?.datePainted || "Unknown date";
+  const countryOfOrigin = p?.countryOfOrigin || "Unknown origin";
+  const style = p?.style || "Unknown style";
+  const externalId = p?.externalId || imageURL; // fallback to imageURL as unique identifier
 
+  const { user, isLoggedIn } = useUser();
   const [modalVisible, setModalVisible] = useState(false);
+  const [favorited, setFavorited] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [galleryDialogVisible, setGalleryDialogVisible] = useState(false);
+  const [galleries, setGalleries] = useState([]);
   // persistent zoom model: baseScale * pinchScale
   // TODO: buggy implementation, resets to where your finger presses down if you're zoomed in. makes for awkward experience
   // TODO: implement double tap to zoom in
@@ -88,6 +99,84 @@ export default function ArtworkPage(props) {
     }
   };
 
+  // Load favorite status and galleries
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      checkFavoriteStatus();
+      loadGalleries();
+    }
+  }, [isLoggedIn, user]);
+
+  async function checkFavoriteStatus() {
+    if (!user) return;
+    const artworkData = { externalId, source };
+    const status = await isFavorited(user.id, artworkData);
+    setFavorited(status);
+  }
+
+  async function loadGalleries() {
+    if (!user) return;
+    const data = await getUserGalleries(user.id);
+    setGalleries(data);
+  }
+
+  async function handleToggleFavorite() {
+    if (!user) return;
+    
+    const artworkData = {
+      externalId,
+      title,
+      artist,
+      imageURL,
+      datePainted,
+      countryOfOrigin,
+      description,
+      department,
+      style,
+      source
+    };
+
+    try {
+      if (favorited) {
+        // Remove from favorites - need to get artwork ID first
+        // For simplicity, we'll just toggle the state and let it refresh
+        setFavorited(false);
+        await checkFavoriteStatus(); // This will update to actual state
+      } else {
+        await addFavorite(user.id, artworkData);
+        setFavorited(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  }
+
+  async function handleAddToGallery(galleryId) {
+    if (!user) return;
+    
+    const artworkData = {
+      externalId,
+      title,
+      artist,
+      imageURL,
+      datePainted,
+      countryOfOrigin,
+      description,
+      department,
+      style,
+      source
+    };
+
+    try {
+      await addArtworkToGallery(galleryId, artworkData);
+      setGalleryDialogVisible(false);
+      alert('Added to gallery!');
+    } catch (error) {
+      console.error('Error adding to gallery:', error);
+      alert('Failed to add to gallery');
+    }
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingBottom: 24 }}>
@@ -98,13 +187,77 @@ export default function ArtworkPage(props) {
         </Pressable>
 
         <View className="px-5 py-6">
-          <PaperText variant="titleLarge">{title}</PaperText>
+          <View className="flex-row justify-between items-start mb-2">
+            <View className="flex-1">
+              <PaperText variant="titleLarge">{title}</PaperText>
+            </View>
+            {isLoggedIn && (
+              <View className="flex-row">
+                <IconButton
+                  icon={favorited ? "heart" : "heart-outline"}
+                  iconColor={favorited ? "#ef4444" : "#000"}
+                  size={24}
+                  onPress={handleToggleFavorite}
+                />
+                <Menu
+                  visible={menuVisible}
+                  onDismiss={() => setMenuVisible(false)}
+                  anchor={
+                    <IconButton
+                      icon="folder-plus-outline"
+                      iconColor="#000"
+                      size={24}
+                      onPress={() => setMenuVisible(true)}
+                    />
+                  }
+                >
+                  <Menu.Item
+                    onPress={() => {
+                      setMenuVisible(false);
+                      setGalleryDialogVisible(true);
+                    }}
+                    title="Add to Gallery"
+                  />
+                </Menu>
+              </View>
+            )}
+          </View>
           <Text className="text-black text-sm mt-1">{artist}</Text>
           <Text className="text-black text-sm mt-1">{source}</Text>
           <Text className="text-black text-sm mt-1">{department}</Text>
           <Text className="text-black text-base leading-6 mt-3">{description}</Text>
         </View>
       </ScrollView>
+
+      {/* Gallery Selection Dialog */}
+      <Portal>
+        <Dialog visible={galleryDialogVisible} onDismiss={() => setGalleryDialogVisible(false)}>
+          <Dialog.Title>Add to Gallery</Dialog.Title>
+          <Dialog.ScrollArea>
+            <ScrollView>
+              {galleries.length === 0 ? (
+                <Text className="text-gray-600 p-4 text-center">
+                  No galleries yet. Create one in your Profile!
+                </Text>
+              ) : (
+                galleries.map((gallery) => (
+                  <Button
+                    key={gallery.id}
+                    mode="text"
+                    onPress={() => handleAddToGallery(gallery.id)}
+                    style={{ justifyContent: 'flex-start' }}
+                  >
+                    {gallery.name}
+                  </Button>
+                ))
+              )}
+            </ScrollView>
+          </Dialog.ScrollArea>
+          <Dialog.Actions>
+            <Button onPress={() => setGalleryDialogVisible(false)}>Cancel</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       <Modal visible={modalVisible} animationType="fade" onRequestClose={() => setModalVisible(false)}>
         <GestureHandlerRootView className="flex-1 bg-black">

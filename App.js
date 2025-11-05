@@ -14,6 +14,8 @@ import Highlight from './components/Highlight';
 import Discover from './components/Discover';
 import Favorites from './components/Favorites';
 import Profile from './components/Profile';
+import GalleryView from './components/GalleryView';
+import { UserProvider } from './context/UserContext';
 import "./global.css";
 
 const Stack = createNativeStackNavigator();
@@ -156,9 +158,9 @@ function HomeScreen({ navigation }) {
       case 'Discover':
         return <Discover />;
       case 'Favorites':
-        return <Favorites />;
+        return <Favorites navigation={navigation} />;
       case 'Profile':
-        return <Profile />;
+        return <Profile navigation={navigation} />;
       default:
         return <Highlight />;
     }
@@ -206,17 +208,19 @@ export default function App() {
   };
 
   return (
-    <PaperProvider theme={theme}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </GestureHandlerRootView>
-    </PaperProvider>
-
+    <UserProvider>
+      <PaperProvider theme={theme}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <NavigationContainer>
+            <StatusBar style="auto" />
+            <Stack.Navigator initialRouteName="Home">
+              <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
+              <Stack.Screen name="Gallery" component={GalleryView} options={{ title: 'Gallery' }} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </GestureHandlerRootView>
+      </PaperProvider>
+    </UserProvider>
   );
 }

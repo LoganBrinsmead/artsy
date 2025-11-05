@@ -108,6 +108,7 @@ export default class MetAPI {
     formatOutput(data) {
         if (!data) return null;
         return {
+            externalId: data["objectID"] ? String(data["objectID"]) : null,
             title: data["title"] || "Untitled",
             imageURL: data["primaryImage"] || data["primaryImageSmall"] || null,
             artist: data["artistDisplayName"] || "Artist Unknown",
