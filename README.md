@@ -1,6 +1,11 @@
-This is a react-native application that is meant as an open-source center for collecting and appreciating artwork and art history from multiple museums and other sources. With an easily extendable API it's simple to add new artwork sources to Artsy.
+# Artsy
 
-This application is still under development but a very early-build MVP is available under the main branch.
+This is a react-native application that is meant as an open-source center for collecting and appreciating art and art history from multiple museums and other sources. With an easily extendable API it's simple to add new artwork sources to Artsy.
+
+![image0](https://github.com/user-attachments/assets/7ea1263a-8b9c-40de-9b1e-d985d76d0d04)
+
+
+This application is still under development but an early-build MVP is available under the main branch.
 
 Quickstart Guide:
 1. Clone the repo
@@ -13,5 +18,4 @@ Planned features:
 - Users with accounts can save their favorite artworks, create "galleries" with favorite artwork
 - Local caching of artwork data and favorited artwork for users without accounts
 - Browse by artist, museum/artwork source, or artwork type.
-- More artwork sources: planned currently is Europeana and Harvard Art Museums.
-- lists of trending artworks, most liked artworks, most viewed, etc. 
+- lists of trending artworks, most liked artworks, most viewed, etc.
