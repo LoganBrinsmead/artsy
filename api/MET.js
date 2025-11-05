@@ -11,8 +11,8 @@
 */
 
 export default class MetAPI {
-    constructor(baseUrl, cacheTTL = 5 * 60 * 1000) {
-        this.baseUrl = baseUrl;
+    constructor(cacheTTL = 5 * 60 * 1000) {
+        this.baseUrl = "https://collectionapi.metmuseum.org";
         this.name = "The Metropolitan Museum of Art";
         // Cache with TTL: { data: [...], timestamp: Date.now() }
         this.searchCache = {};   

@@ -1,5 +1,6 @@
 import MetAPI from './MET';
 import Chicago from './Chicago';
+import Harvard from './Harvard';
 
 // Filters out items that do not contain a usable image URL
 function filterItemsWithImages(items) {
@@ -29,8 +30,9 @@ class API {
     // Cache TTL: 5 minutes (300000 ms) by default
     this.cacheTTL = cacheTTL;
     this.apis = [
-      new MetAPI('https://collectionapi.metmuseum.org', cacheTTL),
+      new MetAPI(cacheTTL),
       new Chicago(cacheTTL),
+      new Harvard(cacheTTL),
     ];
   }
 
