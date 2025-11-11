@@ -179,12 +179,15 @@ export default function ArtworkPage(props) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingBottom: 24 }}>
         <Pressable onPress={() => setModalVisible(true)}>
-          <View className="w-full h-72 bg-gray-100">
+          <View className="w-full h-80 bg-gray-100">
             <Image source={{ uri: imageURL }} resizeMode="cover" className="w-full h-full" />
           </View>
         </Pressable>
+      <ScrollView 
+        className="flex-1 bg-white"
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+      >
 
         <View className="px-5 py-6">
           <View className="flex-row justify-between items-start mb-2">
@@ -227,7 +230,6 @@ export default function ArtworkPage(props) {
           <Text className="text-black text-sm mt-1">{department}</Text>
           <Text className="text-black text-base leading-6 mt-3">{description}</Text>
         </View>
-      </ScrollView>
 
       {/* Gallery Selection Dialog */}
       <Portal>
@@ -258,6 +260,8 @@ export default function ArtworkPage(props) {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+      </ScrollView>
+
 
       <Modal visible={modalVisible} animationType="fade" onRequestClose={() => setModalVisible(false)}>
         <GestureHandlerRootView className="flex-1 bg-black">
