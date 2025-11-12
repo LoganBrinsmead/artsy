@@ -37,6 +37,7 @@ function SearchScreen({ navigation }) {
 
   const keyExtractor = React.useCallback((item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`,[ ]);
 
+
   const performSearch = async () => {
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -83,11 +84,28 @@ function SearchScreen({ navigation }) {
     }
   }, [loading]);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await api.clearCaches();
+      await performSearch();
+    } catch (error) {
+      console.error('Refresh error:', error);
+      setError('Failed to refresh. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1">
         <FlatList
           data={loading ? [] : results}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16, paddingTop: 8 }}

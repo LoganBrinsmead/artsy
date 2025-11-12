@@ -12,6 +12,7 @@ const DISCOVERY_THEMES = [
   { label: 'Portraits', value: 'portraits', searchTerm: 'Portrait' },
   { label: 'Landscapes', value: 'landscapes', searchTerm: 'Landscape' },
   { label: 'Abstract', value: 'abstract', searchTerm: 'Abstract' },
+  { label: 'Surrealism', value: 'surrealism', searchTerm: 'Surrealism' },
 ];
 
 export default function Discover({ navigation }) {
