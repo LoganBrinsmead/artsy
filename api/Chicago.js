@@ -1,17 +1,23 @@
 export default class Chicago {
-  constructor() {
+  constructor(cacheTTL = 5 * 60 * 1000) {
     this.name = "Art Institute of Chicago";
     this.baseURL = "https://api.artic.edu/api/v1";
+    // Cache with TTL: { data: [...], timestamp: Date.now() }
     this.objectsBySearchCache = {};
     this.iifURL = "https://www.artic.edu/iiif/2";
+    // Cache TTL: configurable, defaults to 5 minutes (300000 ms)
+    this.CACHE_TTL = cacheTTL;
   }
 
   // TODO: turn this into search function
   //  include image URL in the data for parsing
   // parse data out so it is extendable, create a parse function to do this.
   async search(searchTerm) {
-    if (searchTerm in this.objectsBySearchCache)
-      return this.objectsBySearchCache[searchTerm];
+    // Check cache with TTL
+    const cached = this.objectsBySearchCache[searchTerm];
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+      return cached.data;
+    }
 
     const dataRequestUrl = this.baseURL + `/artworks/search?q=${encodeURIComponent(searchTerm)}`;
     try {
@@ -42,11 +48,17 @@ export default class Chicago {
         if (i + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
       }
 
-      this.objectsBySearchCache[searchTerm] = out;
-      return this.objectsBySearchCache[searchTerm];
+      this.objectsBySearchCache[searchTerm] = {
+        data: out,
+        timestamp: Date.now()
+      };
+      return this.objectsBySearchCache[searchTerm].data;
     } catch (e) {
       console.warn('AIC search failed:', e?.message || e);
-      this.objectsBySearchCache[searchTerm] = [];
+      this.objectsBySearchCache[searchTerm] = {
+        data: [],
+        timestamp: Date.now()
+      };
       return [];
     }
   }
@@ -74,6 +86,7 @@ export default class Chicago {
   formatOutput(data) {
     if (!data) return null;
     return {
+      externalId: data["id"] ? String(data["id"]) : null,
       title: data["title"] || "Untitled",
       artist: data["artist_title"] || "Artist Unknown",
       datePainted: data["date_end"] || "",
@@ -103,4 +116,23 @@ export default class Chicago {
   }
 
   sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+  /**
+   * Clear all caches
+   */
+  clearCache() {
+    this.objectsBySearchCache = {};
+  }
+
+  /**
+   * Clear expired cache entries
+   */
+  clearExpiredCache() {
+    const now = Date.now();
+    Object.keys(this.objectsBySearchCache).forEach(key => {
+      if (now - this.objectsBySearchCache[key].timestamp >= this.CACHE_TTL) {
+        delete this.objectsBySearchCache[key];
+      }
+    });
+  }
 }
