@@ -7,13 +7,13 @@ import ArtworkCard from './ArtworkCard';
 // Curated discovery themes
 // TODO: more granular discovery themes through the use of specific artist names but has the potential to become stale, let's maybe add random indexing and more artists?
 const DISCOVERY_THEMES = [
-  { label: 'Impressionism', value: 'impressionism', artists: ['Vincent Van Gogh', 'Claude Monet', 'Edgar Degas','Camille Pissarro']},
-  { label: 'Renaissance', value: 'renaissance', artists: ['Renaissance'] },
-  { label: 'Modern Art', value: 'modern', artists: ['Modern Art'] },
-  { label: 'Portraits', value: 'portraits', artists: ['Portrait'] },
-  { label: 'Landscapes', value: 'landscapes', artists: ['Landscape'] },
-  { label: 'Abstract', value: 'abstract', artists: ['Helen Frankenthaler', 'Mark Rothko', 'Jasper Johns', 'Cy Twombly'] },
-  { label: 'Surrealism', value: 'surrealism', artists: ['Salvador Dali', 'René Magritte', 'Max Ernst'] },
+  { label: 'Impressionism', artistsSpecified: true, value: 'impressionism', artists: ['Vincent Van Gogh', 'Claude Monet', 'Edgar Degas','Camille Pissarro']},
+  { label: 'Renaissance', artistsSpecified: false, value: 'renaissance', artists: ['renaissance'] },
+  { label: 'Modern Art', artistsSpecified: false, value: 'modern', artists: ['modern'] },
+  { label: 'Portraits', artistsSpecified: false, value: 'portraits', artists: ['portraits'] },
+  { label: 'Landscapes', artistsSpecified: false, value: 'landscapes', artists: ['landscapes'] },
+  { label: 'Abstract', artistsSpecified: true, value: 'abstract', artists: ['Helen Frankenthaler', 'Mark Rothko', 'Jasper Johns', 'Cy Twombly'] },
+  { label: 'Surrealism', artistsSpecified: true, value: 'surrealism', artists: ['Salvador Dali', 'René Magritte', 'Max Ernst'] },
 ];
 
 export default function Discover({ navigation }) {
@@ -32,8 +32,10 @@ export default function Discover({ navigation }) {
       const theme = DISCOVERY_THEMES.find(t => t.value === selectedTheme);
       if (!theme) return;
 
-      const results = await Promise.all(theme.artists.map(artist => api.search(artist)));
-      const flattenedResults = results.flat();
+      const results = theme.artistsSpecified ? await Promise.all(theme.artists.map(artist => api.search(artist))): await api.search(theme.value);
+      results.sort(() => Math.random() - 0.5);    // randomize results
+      let flattenedResults = results.flat();
+      flattenedResults = flattenedResults.filter(r => theme.artists.includes(r.artist));
       setArtworks(flattenedResults.slice(0, 50)); // Show up to 50 artworks
     } catch (error) {
       console.error('Error loading discover artworks:', error);
