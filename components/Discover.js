@@ -32,11 +32,19 @@ export default function Discover({ navigation }) {
       const theme = DISCOVERY_THEMES.find(t => t.value === selectedTheme);
       if (!theme) return;
 
-      const results = theme.artistsSpecified ? await Promise.all(theme.artists.map(artist => api.search(artist))): await api.search(theme.value);
+      let results;
+
+      if(theme.artistsSpecified) {
+        results = await Promise.all(theme.artists.map(artist => api.search(artist)));
+        results = results.flat();
+        results = results.filter(r => theme.artists.includes(r.artist));
+        
+      } else {
+        results = await api.search(theme.value);
+        results = results.flat();
+      }
       results.sort(() => Math.random() - 0.5);    // randomize results
-      let flattenedResults = results.flat();
-      flattenedResults = flattenedResults.filter(r => theme.artists.includes(r.artist));
-      setArtworks(flattenedResults.slice(0, 50)); // Show up to 50 artworks
+      setArtworks(results.slice(0, 50)); // Show up to 50 artworks
     } catch (error) {
       console.error('Error loading discover artworks:', error);
     } finally {
