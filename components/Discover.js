@@ -5,14 +5,15 @@ import api from '../api';
 import ArtworkCard from './ArtworkCard';
 
 // Curated discovery themes
+// TODO: more granular discovery themes through the use of specific artist names but has the potential to become stale, let's maybe add random indexing and more artists?
 const DISCOVERY_THEMES = [
-  { label: 'Impressionism', value: 'impressionism', searchTerm: 'Impressionism' },
-  { label: 'Renaissance', value: 'renaissance', searchTerm: 'Renaissance' },
-  { label: 'Modern Art', value: 'modern', searchTerm: 'Modern Art' },
-  { label: 'Portraits', value: 'portraits', searchTerm: 'Portrait' },
-  { label: 'Landscapes', value: 'landscapes', searchTerm: 'Landscape' },
-  { label: 'Abstract', value: 'abstract', searchTerm: 'Abstract' },
-  { label: 'Surrealism', value: 'surrealism', searchTerm: 'Surrealism' },
+  { label: 'Impressionism', value: 'impressionism', artists: ['Vincent Van Gogh', 'Claude Monet', 'Edgar Degas','Camille Pissarro']},
+  { label: 'Renaissance', value: 'renaissance', artists: ['Renaissance'] },
+  { label: 'Modern Art', value: 'modern', artists: ['Modern Art'] },
+  { label: 'Portraits', value: 'portraits', artists: ['Portrait'] },
+  { label: 'Landscapes', value: 'landscapes', artists: ['Landscape'] },
+  { label: 'Abstract', value: 'abstract', artists: ['Helen Frankenthaler', 'Mark Rothko', 'Jasper Johns', 'Cy Twombly'] },
+  { label: 'Surrealism', value: 'surrealism', artists: ['Salvador Dali', 'René Magritte', 'Max Ernst'] },
 ];
 
 export default function Discover({ navigation }) {
@@ -31,8 +32,9 @@ export default function Discover({ navigation }) {
       const theme = DISCOVERY_THEMES.find(t => t.value === selectedTheme);
       if (!theme) return;
 
-      const results = await api.search(theme.searchTerm);
-      setArtworks(results.slice(0, 20)); // Show up to 20 artworks
+      const results = await Promise.all(theme.artists.map(artist => api.search(artist)));
+      const flattenedResults = results.flat();
+      setArtworks(flattenedResults.slice(0, 50)); // Show up to 50 artworks
     } catch (error) {
       console.error('Error loading discover artworks:', error);
     } finally {
