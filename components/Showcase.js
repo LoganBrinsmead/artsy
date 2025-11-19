@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, ActivityIndicator, FlatList } from 'react-native';
 import { Card } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api';
 import ArtworkCard from './ArtworkCard';
+import { useThemeMode } from '../context/ThemeContext';
 
 // Featured artists that rotate daily
 const FEATURED_ARTISTS = [
@@ -32,10 +34,49 @@ export default function Showcase({ navigation }) {
   const [artist, setArtist] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isDark } = useThemeMode();
 
   useEffect(() => {
     loadTodaysShowcase();
   }, []);
+
+  async function getNotificationsModule() {
+    try {
+      const Notifications = (await import('expo-notifications')).default || (await import('expo-notifications'));
+      return Notifications;
+    } catch (e) {
+      console.warn('expo-notifications not available; skipping notifications');
+      return null;
+    }
+  }
+
+  async function maybeNotifyNewArtist(name) {
+    try {
+      const last = await AsyncStorage.getItem('showcase:lastArtist');
+      if (last !== name) {
+        const Notifications = await getNotificationsModule();
+        if (Notifications && Notifications.scheduleNotificationAsync) {
+          // Ask permission if needed
+          try {
+            const { status } = await Notifications.getPermissionsAsync();
+            if (status !== 'granted') {
+              await Notifications.requestPermissionsAsync();
+            }
+          } catch {}
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "New Artist Showcase",
+              body: `${name} is today's featured artist. Tap to explore their works!`,
+            },
+            trigger: null,
+          });
+        }
+        await AsyncStorage.setItem('showcase:lastArtist', name);
+      }
+    } catch (e) {
+      // non-fatal
+    }
+  }
 
   async function loadTodaysShowcase() {
     try {
@@ -53,6 +94,7 @@ export default function Showcase({ navigation }) {
       }
 
       setArtworks(results.slice(0, 12)); // Show up to 12 artworks
+      await maybeNotifyNewArtist(todaysArtist.name);
     } catch (error) {
       console.error('Error loading showcase:', error);
     } finally {
@@ -66,15 +108,15 @@ export default function Showcase({ navigation }) {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#000" />
-        <Text className="text-gray-600 mt-4">Loading today's showcase...</Text>
+      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} justify-center items-center`}>
+        <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
+        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-4`}>Loading today's showcase...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
       <FlatList
         data={artworks}
         keyExtractor={(item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`}
@@ -82,22 +124,22 @@ export default function Showcase({ navigation }) {
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListHeaderComponent={
           <View className="mb-6">
-            <Text className="text-3xl font-bold text-black mb-2">Today's Showcase</Text>
-            <Card className="bg-gray-50 mb-4">
+            <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>Today's Showcase</Text>
+            <Card className={`${isDark ? 'bg-neutral-900' : 'bg-gray-50'} mb-4`}>
               <Card.Content>
-                <Text className="text-2xl font-bold text-black mb-2">{artist?.name}</Text>
-                <Text className="text-gray-700 leading-6">{artist?.bio}</Text>
-                <Text className="text-gray-500 text-sm mt-3">
+                <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>{artist?.name}</Text>
+                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} leading-6`}>{artist?.bio}</Text>
+                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm mt-3`}>
                   Featured artist changes daily
                 </Text>
               </Card.Content>
             </Card>
-            <Text className="text-xl font-semibold text-black mb-3">Featured Works</Text>
+            <Text className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-black'} mb-3`}>Featured Works</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View className="h-6" />}
         ListEmptyComponent={
-          <Text className="text-gray-500 text-center py-8">
+          <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>
             No artworks found for today's featured artist.
           </Text>
         }

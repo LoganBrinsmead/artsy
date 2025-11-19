@@ -4,6 +4,7 @@ import { GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, TapGest
 import { Text as PaperText, IconButton, Menu, Button, Portal, Dialog } from 'react-native-paper';
 import { useUser } from '../context/UserContext';
 import { addFavorite, removeFavorite, isFavorited, getUserGalleries, addArtworkToGallery, isArtworkInGallery } from '../database/services';
+import { useThemeMode } from '../context/ThemeContext';
 
 export default function ArtworkPage(props) {
   const p = props?.route?.params ?? props;
@@ -20,6 +21,7 @@ export default function ArtworkPage(props) {
   const externalId = p?.externalId || imageURL; // fallback to imageURL as unique identifier
 
   const { user, isLoggedIn } = useUser();
+  const { isDark } = useThemeMode();
   const [modalVisible, setModalVisible] = useState(false);
   const [favorited, setFavorited] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -179,9 +181,9 @@ export default function ArtworkPage(props) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`} contentContainerStyle={{ paddingBottom: 24 }}>
         <Pressable onPress={() => setModalVisible(true)}>
-          <View className="w-full h-72 bg-gray-100">
+          <View className={`w-full h-72 ${isDark ? 'bg-neutral-900' : 'bg-gray-100'}`}>
             <Image source={{ uri: imageURL }} resizeMode="cover" className="w-full h-full" />
           </View>
         </Pressable>
@@ -195,7 +197,7 @@ export default function ArtworkPage(props) {
               <View className="flex-row">
                 <IconButton
                   icon={favorited ? "heart" : "heart-outline"}
-                  iconColor={favorited ? "#ef4444" : "#000"}
+                  iconColor={favorited ? "#ef4444" : (isDark ? '#fff' : '#000')}
                   size={24}
                   onPress={handleToggleFavorite}
                 />
@@ -205,7 +207,7 @@ export default function ArtworkPage(props) {
                   anchor={
                     <IconButton
                       icon="folder-plus-outline"
-                      iconColor="#000"
+                      iconColor={isDark ? '#fff' : '#000'}
                       size={24}
                       onPress={() => setMenuVisible(true)}
                     />
@@ -222,10 +224,10 @@ export default function ArtworkPage(props) {
               </View>
             )}
           </View>
-          <Text className="text-black text-sm mt-1">{artist}</Text>
-          <Text className="text-black text-sm mt-1">{source}</Text>
-          <Text className="text-black text-sm mt-1">{department}</Text>
-          <Text className="text-black text-base leading-6 mt-3">{description}</Text>
+          <Text className={`${isDark ? 'text-white' : 'text-black'} text-sm mt-1`}>{artist}</Text>
+          <Text className={`${isDark ? 'text-white' : 'text-black'} text-sm mt-1`}>{source}</Text>
+          <Text className={`${isDark ? 'text-white' : 'text-black'} text-sm mt-1`}>{department}</Text>
+          <Text className={`${isDark ? 'text-gray-200' : 'text-black'} text-base leading-6 mt-3`}>{description}</Text>
         </View>
       </ScrollView>
 
@@ -236,7 +238,7 @@ export default function ArtworkPage(props) {
           <Dialog.ScrollArea>
             <ScrollView>
               {galleries.length === 0 ? (
-                <Text className="text-gray-600 p-4 text-center">
+                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} p-4 text-center`}>
                   No galleries yet. Create one in your Profile!
                 </Text>
               ) : (

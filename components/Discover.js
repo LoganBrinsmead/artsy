@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, Pressable } from 'react-native
 import { Button, SegmentedButtons } from 'react-native-paper';
 import api from '../api';
 import ArtworkCard from './ArtworkCard';
+import { useThemeMode } from '../context/ThemeContext';
 
 // Curated discovery themes
 // TODO: more granular discovery themes through the use of specific artist names but has the potential to become stale, let's maybe add random indexing and more artists?
@@ -17,6 +18,7 @@ const DISCOVERY_THEMES = [
 ];
 
 export default function Discover({ navigation }) {
+  const { isDark } = useThemeMode();
   const [selectedTheme, setSelectedTheme] = useState('impressionism');
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +67,7 @@ export default function Discover({ navigation }) {
   const currentTheme = DISCOVERY_THEMES.find(t => t.value === selectedTheme);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
       <FlatList
         data={artworks}
         keyExtractor={(item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`}
@@ -73,11 +75,11 @@ export default function Discover({ navigation }) {
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListHeaderComponent={
           <View className="mb-6">
-            <Text className="text-3xl font-bold text-black mb-4">Discover</Text>
+            <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-4`}>Discover</Text>
             
             {/* Theme Selection */}
             <View className="mb-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">Browse by Theme</Text>
+              <Text className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Browse by Theme</Text>
               <View className="flex-row flex-wrap gap-2">
                 {DISCOVERY_THEMES.map((theme) => (
                   <Pressable
@@ -85,15 +87,15 @@ export default function Discover({ navigation }) {
                     onPress={() => setSelectedTheme(theme.value)}
                     className={`px-4 py-2 rounded-full ${
                       selectedTheme === theme.value
-                        ? 'bg-black'
-                        : 'bg-gray-200'
+                        ? (isDark ? 'bg-white' : 'bg-black')
+                        : (isDark ? 'bg-neutral-800' : 'bg-gray-200')
                     }`}
                   >
                     <Text
                       className={`text-sm font-medium ${
                         selectedTheme === theme.value
-                          ? 'text-white'
-                          : 'text-gray-700'
+                          ? (isDark ? 'text-black' : 'text-white')
+                          : (isDark ? 'text-gray-200' : 'text-gray-700')
                       }`}
                     >
                       {theme.label}
@@ -103,7 +105,7 @@ export default function Discover({ navigation }) {
               </View>
             </View>
 
-            <Text className="text-xl font-semibold text-black mb-3">
+            <Text className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-black'} mb-3`}>
               {currentTheme?.label} Collection
             </Text>
           </View>
@@ -112,11 +114,11 @@ export default function Discover({ navigation }) {
         ListEmptyComponent={
           loading ? (
             <View className="py-12 items-center">
-              <ActivityIndicator size="large" color="#000" />
-              <Text className="text-gray-600 mt-4">Loading artworks...</Text>
+              <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
+              <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-4`}>Loading artworks...</Text>
             </View>
           ) : (
-            <Text className="text-gray-500 text-center py-8">
+            <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>
               No artworks found for this theme.
             </Text>
           )

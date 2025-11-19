@@ -4,9 +4,11 @@ import { useUser } from '../context/UserContext';
 import { getUserFavorites, removeFavorite } from '../database/services';
 import ArtworkCard from './ArtworkCard';
 import { IconButton } from 'react-native-paper';
+import { useThemeMode } from '../context/ThemeContext';
 
 export default function Favorites({ navigation }) {
   const { user, isLoggedIn } = useUser();
+  const { isDark } = useThemeMode();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,7 +70,7 @@ export default function Favorites({ navigation }) {
         <ArtworkCard navigation={navigation} {...artworkData} />
         <Pressable
           onPress={() => handleRemoveFavorite(item.id)}
-          className="absolute top-2 right-2 bg-white rounded-full shadow-lg"
+          className={`absolute top-2 right-2 ${isDark ? 'bg-neutral-900' : 'bg-white'} rounded-full shadow-lg`}
           style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}
         >
           <IconButton icon="heart" iconColor="#ef4444" size={20} />
@@ -79,9 +81,9 @@ export default function Favorites({ navigation }) {
 
   if (!isLoggedIn) {
     return (
-      <View className="flex-1 bg-white p-4 justify-center items-center">
-        <Text className="text-xl font-bold text-black mb-2">Not Logged In</Text>
-        <Text className="text-gray-600 text-center">
+      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} p-4 justify-center items-center`}>
+        <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>Not Logged In</Text>
+        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-center`}>
           Please log in from the Profile tab to save favorites.
         </Text>
       </View>
@@ -90,25 +92,25 @@ export default function Favorites({ navigation }) {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#000" />
+      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} justify-center items-center`}>
+        <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
       <FlatList
         data={favorites}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListHeaderComponent={
-          <Text className="text-3xl font-bold text-black mb-4 px-2">Favorites</Text>
+          <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-4 px-2`}>Favorites</Text>
         }
         ItemSeparatorComponent={() => <View className="h-6" />}
         ListEmptyComponent={
-          <Text className="text-gray-500 text-center py-8">
+          <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>
             No favorites yet. Start exploring and save artworks you love!
           </Text>
         }
