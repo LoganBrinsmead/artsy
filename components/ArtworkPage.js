@@ -1,10 +1,9 @@
 import { View, Text, Image, ScrollView, Modal, Pressable, Animated } from "react-native";
 import { useRef, useState, useEffect } from 'react';
 import { GestureHandlerRootView, PanGestureHandler, PinchGestureHandler, TapGestureHandler, State } from 'react-native-gesture-handler';
-import { Text as PaperText, IconButton, Menu, Button, Portal, Dialog } from 'react-native-paper';
+import { Text as PaperText, IconButton, Menu, Button, Portal, Dialog, useTheme } from 'react-native-paper';
 import { useUser } from '../context/UserContext';
 import { addFavorite, removeFavorite, isFavorited, getUserGalleries, addArtworkToGallery, isArtworkInGallery } from '../database/services';
-import { useThemeMode } from '../context/ThemeContext';
 
 export default function ArtworkPage(props) {
   const p = props?.route?.params ?? props;
@@ -21,7 +20,7 @@ export default function ArtworkPage(props) {
   const externalId = p?.externalId || imageURL; // fallback to imageURL as unique identifier
 
   const { user, isLoggedIn } = useUser();
-  const { isDark } = useThemeMode();
+  const theme = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [favorited, setFavorited] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -181,23 +180,23 @@ export default function ArtworkPage(props) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ScrollView className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ paddingBottom: 24 }}>
         <Pressable onPress={() => setModalVisible(true)}>
-          <View className={`w-full h-72 ${isDark ? 'bg-neutral-900' : 'bg-gray-100'}`}>
-            <Image source={{ uri: imageURL }} resizeMode="cover" className="w-full h-full" />
+          <View style={{ width: '100%', height: 288, backgroundColor: theme.colors.surfaceVariant }}>
+            <Image source={{ uri: imageURL }} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
           </View>
         </Pressable>
 
-        <View className="px-5 py-6">
-          <View className="flex-row justify-between items-start mb-2">
-            <View className="flex-1">
+        <View style={{ paddingHorizontal: 20, paddingVertical: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+            <View style={{ flex: 1 }}>
               <PaperText variant="titleLarge">{title}</PaperText>
             </View>
             {isLoggedIn && (
-              <View className="flex-row">
+              <View style={{ flexDirection: 'row' }}>
                 <IconButton
                   icon={favorited ? "heart" : "heart-outline"}
-                  iconColor={favorited ? "#ef4444" : (isDark ? '#fff' : '#000')}
+                  iconColor={favorited ? "#ef4444" : theme.colors.onBackground}
                   size={24}
                   onPress={handleToggleFavorite}
                 />
@@ -207,7 +206,7 @@ export default function ArtworkPage(props) {
                   anchor={
                     <IconButton
                       icon="folder-plus-outline"
-                      iconColor={isDark ? '#fff' : '#000'}
+                      iconColor={theme.colors.onBackground}
                       size={24}
                       onPress={() => setMenuVisible(true)}
                     />
@@ -224,10 +223,10 @@ export default function ArtworkPage(props) {
               </View>
             )}
           </View>
-          <Text className={`${isDark ? 'text-white' : 'text-black'} text-sm mt-1`}>{artist}</Text>
-          <Text className={`${isDark ? 'text-white' : 'text-black'} text-sm mt-1`}>{source}</Text>
-          <Text className={`${isDark ? 'text-white' : 'text-black'} text-sm mt-1`}>{department}</Text>
-          <Text className={`${isDark ? 'text-gray-200' : 'text-black'} text-base leading-6 mt-3`}>{description}</Text>
+          <Text style={{ color: theme.colors.onBackground, fontSize: 14, marginTop: 4 }}>{artist}</Text>
+          <Text style={{ color: theme.colors.onBackground, fontSize: 14, marginTop: 4 }}>{source}</Text>
+          <Text style={{ color: theme.colors.onBackground, fontSize: 14, marginTop: 4 }}>{department}</Text>
+          <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 16, lineHeight: 24, marginTop: 12 }}>{description}</Text>
         </View>
       </ScrollView>
 
@@ -238,7 +237,7 @@ export default function ArtworkPage(props) {
           <Dialog.ScrollArea>
             <ScrollView>
               {galleries.length === 0 ? (
-                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} p-4 text-center`}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, padding: 16, textAlign: 'center' }}>
                   No galleries yet. Create one in your Profile!
                 </Text>
               ) : (
@@ -262,9 +261,9 @@ export default function ArtworkPage(props) {
       </Portal>
 
       <Modal visible={modalVisible} animationType="fade" onRequestClose={() => setModalVisible(false)}>
-        <GestureHandlerRootView className="flex-1 bg-black">
-          <Pressable className="absolute top-0 right-0 left-0 h-16 z-20" onPress={() => setModalVisible(false)} />
-          <View className="flex-1">
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <Pressable style={{ position: 'absolute', top: 0, right: 0, left: 0, height: 64, zIndex: 20 }} onPress={() => setModalVisible(false)} />
+          <View style={{ flex: 1 }}>
             <PinchGestureHandler
               ref={pinchRef}
               onGestureEvent={onPinchEvent}
@@ -272,7 +271,7 @@ export default function ArtworkPage(props) {
               simultaneousHandlers={panRef}
               minPointers={2}
             >
-              <Animated.View className="flex-1 items-center justify-center">
+              <Animated.View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                 <TapGestureHandler
                   ref={doubleTapRef}
                   numberOfTaps={2}

@@ -3,12 +3,11 @@ import { View, Text, FlatList, ActivityIndicator, Pressable } from 'react-native
 import { useUser } from '../context/UserContext';
 import { getUserFavorites, removeFavorite } from '../database/services';
 import ArtworkCard from './ArtworkCard';
-import { IconButton } from 'react-native-paper';
-import { useThemeMode } from '../context/ThemeContext';
+import { IconButton, useTheme } from 'react-native-paper';
 
 export default function Favorites({ navigation }) {
   const { user, isLoggedIn } = useUser();
-  const { isDark } = useThemeMode();
+  const theme = useTheme();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,8 +69,7 @@ export default function Favorites({ navigation }) {
         <ArtworkCard navigation={navigation} {...artworkData} />
         <Pressable
           onPress={() => handleRemoveFavorite(item.id)}
-          className={`absolute top-2 right-2 ${isDark ? 'bg-neutral-900' : 'bg-white'} rounded-full shadow-lg`}
-          style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}
+          style={{ position: 'absolute', top: 8, right: 8, width: 40, height: 40, backgroundColor: theme.colors.surface, borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}
         >
           <IconButton icon="heart" iconColor="#ef4444" size={20} />
         </Pressable>
@@ -81,9 +79,9 @@ export default function Favorites({ navigation }) {
 
   if (!isLoggedIn) {
     return (
-      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} p-4 justify-center items-center`}>
-        <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>Not Logged In</Text>
-        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-center`}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, padding: 16, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 8 }}>Not Logged In</Text>
+        <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
           Please log in from the Profile tab to save favorites.
         </Text>
       </View>
@@ -92,25 +90,25 @@ export default function Favorites({ navigation }) {
 
   if (loading) {
     return (
-      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} justify-center items-center`}>
-        <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
-    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <FlatList
         data={favorites}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListHeaderComponent={
-          <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-4 px-2`}>Favorites</Text>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 16, paddingHorizontal: 8 }}>Favorites</Text>
         }
-        ItemSeparatorComponent={() => <View className="h-6" />}
+        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
         ListEmptyComponent={
-          <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>
+          <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 32 }}>
             No favorites yet. Start exploring and save artworks you love!
           </Text>
         }

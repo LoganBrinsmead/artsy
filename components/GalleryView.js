@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, Pressable } from 'react-native';
-import { IconButton } from 'react-native-paper';
-import { useThemeMode } from '../context/ThemeContext';
+import { IconButton, useTheme } from 'react-native-paper';
 import { getGalleryById, getGalleryArtworks, removeArtworkFromGallery } from '../database/services';
 import ArtworkCard from './ArtworkCard';
 
 export default function GalleryView({ route, navigation }) {
   const { galleryId } = route.params;
-  const { isDark } = useThemeMode();
+  const theme = useTheme();
   const [gallery, setGallery] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +65,7 @@ export default function GalleryView({ route, navigation }) {
         <ArtworkCard navigation={navigation} {...artworkData} />
         <Pressable
           onPress={() => handleRemoveArtwork(item.id)}
-          className={`absolute top-2 right-2 ${isDark ? 'bg-neutral-900' : 'bg-white'} rounded-full shadow-lg`}
-          style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}
+          style={{ position: 'absolute', top: 8, right: 8, width: 40, height: 40, backgroundColor: theme.colors.surface, borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}
         >
           <IconButton icon="close" iconColor="#ef4444" size={20} />
         </Pressable>
@@ -77,17 +75,17 @@ export default function GalleryView({ route, navigation }) {
 
   if (loading) {
     return (
-      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} justify-center items-center`}>
-        <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   if (!gallery) {
     return (
-      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} justify-center items-center p-4`}>
-        <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>Gallery Not Found</Text>
-        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-center`}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 8 }}>Gallery Not Found</Text>
+        <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
           This gallery may have been deleted.
         </Text>
       </View>
@@ -95,26 +93,26 @@ export default function GalleryView({ route, navigation }) {
   }
 
   return (
-    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <FlatList
         data={artworks}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16 }}
         ListHeaderComponent={
-          <View className="mb-4">
-            <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>{gallery.name}</Text>
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 8 }}>{gallery.name}</Text>
             {gallery.description && (
-              <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>{gallery.description}</Text>
+              <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>{gallery.description}</Text>
             )}
-            <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
+            <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
               {artworks.length} artwork{artworks.length !== 1 ? 's' : ''}
             </Text>
           </View>
         }
-        ItemSeparatorComponent={() => <View className="h-6" />}
+        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
         ListEmptyComponent={
-          <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>
+          <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 32 }}>
             No artworks in this gallery yet. Add some from your favorites or search results!
           </Text>
         }

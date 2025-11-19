@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Image } from "react-native";
-import { Card } from 'react-native-paper';
+import { Card, useTheme } from 'react-native-paper';
 
 function ArtworkCard(props) {
+  const theme = useTheme();
   const navigation = props?.navigation;
   const p = props?.route?.params ?? props;
   const imageURL = p?.imageURL || p?.uri || "";
@@ -18,14 +19,14 @@ function ArtworkCard(props) {
 
   return (
     <View>
-      <Card className="rounded-xl overflow-hidden bg-white" onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle, externalId })}>
+      <Card style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: theme.colors.surface }} onPress={() => navigation?.navigate && navigation.navigate("Artwork", { imageURL, title, datePainted, countryOfOrigin, artist, description, department, source, style: imageStyle, externalId })}>
         {imageURL ? (
-          <Image source={{ uri: imageURL }} className="w-full h-40" resizeMode="cover" />
+          <Image source={{ uri: imageURL }} style={{ width: '100%', height: 160 }} resizeMode="cover" />
         ) : null}
-        <View className="p-4">
-          <Text className="text-lg font-semibold text-black mb-1">{title}</Text>
-          <Text className="text-black/70 text-sm">{artist}</Text>
-          <Text className="text-black/40 text-xs mt-0.5">{source}</Text>
+        <View style={{ padding: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: theme.dark ? '#ffffff' : theme.colors.onBackground, marginBottom: 4 }}>{title}</Text>
+          <Text style={{ color: theme.dark ? '#ffffff' : theme.colors.onBackground, opacity: theme.dark ? 0.9 : 0.7, fontSize: 14 }}>{artist}</Text>
+          <Text style={{ color: theme.dark ? '#ffffff' : theme.colors.onBackground, opacity: theme.dark ? 0.7 : 0.4, fontSize: 12, marginTop: 2 }}>{source}</Text>
         </View>
       </Card>
     </View>

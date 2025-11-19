@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, FlatList } from 'react-native';
-import { Card } from 'react-native-paper';
+import { Card, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api';
 import ArtworkCard from './ArtworkCard';
-import { useThemeMode } from '../context/ThemeContext';
 
 // Featured artists that rotate daily
 const FEATURED_ARTISTS = [
@@ -34,7 +33,7 @@ export default function Showcase({ navigation }) {
   const [artist, setArtist] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { isDark } = useThemeMode();
+  const theme = useTheme();
 
   useEffect(() => {
     loadTodaysShowcase();
@@ -108,38 +107,38 @@ export default function Showcase({ navigation }) {
 
   if (loading) {
     return (
-      <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'} justify-center items-center`}>
-        <ActivityIndicator size="large" color={isDark ? '#fff' : '#000'} />
-        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-4`}>Loading today's showcase...</Text>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>Loading today's showcase...</Text>
       </View>
     );
   }
 
   return (
-    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <FlatList
         data={artworks}
         keyExtractor={(item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListHeaderComponent={
-          <View className="mb-6">
-            <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>Today's Showcase</Text>
-            <Card className={`${isDark ? 'bg-neutral-900' : 'bg-gray-50'} mb-4`}>
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 8 }}>Today's Showcase</Text>
+            <Card style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }}>
               <Card.Content>
-                <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'} mb-2`}>{artist?.name}</Text>
-                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} leading-6`}>{artist?.bio}</Text>
-                <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm mt-3`}>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.onSurface, marginBottom: 8 }}>{artist?.name}</Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant, lineHeight: 24 }}>{artist?.bio}</Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, marginTop: 12 }}>
                   Featured artist changes daily
                 </Text>
               </Card.Content>
             </Card>
-            <Text className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-black'} mb-3`}>Featured Works</Text>
+            <Text style={{ fontSize: 20, fontWeight: '600', color: theme.colors.onBackground, marginBottom: 12 }}>Featured Works</Text>
           </View>
         }
-        ItemSeparatorComponent={() => <View className="h-6" />}
+        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
         ListEmptyComponent={
-          <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>
+          <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 32 }}>
             No artworks found for today's featured artist.
           </Text>
         }

@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ArtworkPage from './components/ArtworkPage';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Provider as PaperProvider, MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
+import { Provider as PaperProvider, useTheme } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Showcase from './components/Showcase';
 import Discover from './components/Discover';
@@ -15,14 +15,14 @@ import Profile from './components/Profile';
 import GalleryView from './components/GalleryView';
 import Search from './components/Search';
 import { UserProvider } from './context/UserContext';
-import { ThemeProvider, useThemeMode } from './context/ThemeContext';
+import { ThemeProvider, useAppTheme } from './context/ThemeContext';
 import "./global.css";
 
 const Stack = createNativeStackNavigator();
 
 function HomeScreen({ navigation }) {
   const [tab, setTab] = useState('Showcase');
-  const { isDark } = useThemeMode();
+  const theme = useTheme();
 
   const renderTab = () => {
     switch (tab) {
@@ -43,17 +43,21 @@ function HomeScreen({ navigation }) {
 
   const TabButton = ({ label }) => (
     <Pressable onPress={() => setTab(label)} style={{ flex: 1, paddingVertical: 10 }}>
-      <Text className={`text-center ${tab === label ? (isDark ? 'text-white font-bold' : 'text-black font-bold') : (isDark ? 'text-gray-300' : 'text-gray-500')}`}>{label}</Text>
+      <Text style={{
+        textAlign: 'center',
+        color: tab === label ? theme.colors.onBackground : theme.colors.onSurfaceVariant,
+        fontWeight: tab === label ? 'bold' : 'normal',
+      }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? 'bg-black' : 'bg-white'}`}>
-      <View className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ flex: 1 }}>
         {renderTab()}
       </View>
-      <View className={`${isDark ? 'border-gray-700 bg-black' : 'border-gray-200 bg-white'} border-t`}>
-        <View className="flex-row">
+      <View style={{ borderTopWidth: 1, borderTopColor: theme.colors.outline, backgroundColor: theme.colors.background }}>
+        <View style={{ flexDirection: 'row' }}>
           <TabButton label="Showcase" />
           <TabButton label="Search" />
           <TabButton label="Discover" />
@@ -66,11 +70,17 @@ function HomeScreen({ navigation }) {
 }
 
 function AppInner() {
-  const { isDark } = useThemeMode();
+  const { theme, isDark } = useAppTheme();
 
-  const theme = isDark
-    ? { ...MD3DarkTheme }
-    : { ...MD3LightTheme };
+  const screenOptions = {
+    headerStyle: {
+      backgroundColor: theme.colors.background,
+    },
+    headerTintColor: theme.colors.onBackground,
+    headerTitleStyle: {
+      color: theme.colors.onBackground,
+    },
+  };
 
   return (
     <UserProvider>
@@ -78,7 +88,7 @@ function AppInner() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <NavigationContainer>
             <StatusBar style={isDark ? 'light' : 'dark'} />
-            <Stack.Navigator initialRouteName="Home">
+            <Stack.Navigator initialRouteName="Home" screenOptions={screenOptions}>
               <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
               <Stack.Screen name="Gallery" component={GalleryView} options={{ title: 'Gallery' }} />
