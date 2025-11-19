@@ -1,160 +1,35 @@
 import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, Animated, Easing, FlatList, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ArtworkPage from './components/ArtworkPage';
 import React, { useState } from 'react';
-import ArtworkCard from './components/ArtworkCard';
-import api from './api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Provider as PaperProvider, TextInput, Button, MD3LightTheme } from 'react-native-paper';
+import { Provider as PaperProvider, useTheme } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Showcase from './components/Showcase';
 import Discover from './components/Discover';
 import Favorites from './components/Favorites';
 import Profile from './components/Profile';
 import GalleryView from './components/GalleryView';
+import Search from './components/Search';
 import { UserProvider } from './context/UserContext';
+import { ThemeProvider, useAppTheme } from './context/ThemeContext';
 import "./global.css";
 
 const Stack = createNativeStackNavigator();
 
-function SearchScreen({ navigation }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const placeholderCount = 6;
-  const [placeholders] = useState(
-    Array.from({ length: placeholderCount }, () => new Animated.Value(0))
-  );
-  const [version, setVersion] = useState(0); // bump to force FlatList refresh when order changes
-
-  const renderItem = React.useCallback(({ item, index }) => (
-    <ArtworkCard navigation={navigation} {...item} />
-  ), [navigation]);
-
-  const keyExtractor = React.useCallback((item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`,[ ]);
-
-  const performSearch = async () => {
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    setLoading(true);
-    setError('');
-    try {
-      const data = await api.search(trimmed);
-      const arr = Array.isArray(data) ? data : [];
-      setResults(arr);
-      setVersion(v => v + 1);
-      
-    } catch (e) {
-      setError('Failed to fetch results.');
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Debounce manual search if user taps quickly
-  const searchRef = React.useRef(null);
-  const onPressSearch = () => {
-    if (searchRef.current) clearTimeout(searchRef.current);
-    searchRef.current = setTimeout(() => performSearch(), 200);
-  };
-
-  // Staggered fade-in for loading skeletons
-  React.useEffect(() => {
-    if (loading) {
-      placeholders.forEach(v => v.setValue(0));
-      Animated.stagger(
-        150,
-        placeholders.map((v) =>
-          Animated.timing(v, {
-            toValue: 1,
-            duration: 400,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          })
-        )
-      ).start();
-    } else {
-      placeholders.forEach(v => v.setValue(0));
-    }
-  }, [loading]);
-
-  return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1">
-        <FlatList
-          data={loading ? [] : results}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16, paddingTop: 8 }}
-          ListHeaderComponent={(
-            <View className="px-2 pb-3">
-              <Text className="text-3xl font-bold text-black mb-3">Search</Text>
-              <View className="flex-row items-center">
-                <View className="flex-1">
-                  <TextInput
-                    mode="outlined"
-                    placeholder="Search for artworks…"
-                    value={query}
-                    onChangeText={setQuery}
-                    onSubmitEditing={performSearch}
-                    returnKeyType="search"
-                  />
-                </View>
-                <View className="w-3" />
-                <Button mode="contained" onPress={onPressSearch}>
-                  Search
-                </Button>
-              </View>
-              {error ? (
-                <Text className="text-red-600 mt-2">{error}</Text>
-              ) : null}
-            </View>
-          )}
-          ItemSeparatorComponent={() => <View className="h-6" />}
-          initialNumToRender={8}
-          maxToRenderPerBatch={10}
-          windowSize={10}
-          removeClippedSubviews
-          ListEmptyComponent={loading ? (
-            <View>
-              {placeholders.map((opacity, i) => (
-                <Animated.View
-                  key={`ph-${i}`}
-                  style={{ opacity }}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden mb-4"
-                >
-                  <View className="w-full h-40 bg-gray-200" />
-                  <View className="p-4">
-                    <View className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-                    <View className="h-3 bg-gray-200 rounded w-1/3" />
-                  </View>
-                </Animated.View>
-              ))}
-            </View>
-          ) : (
-            <Text className="text-gray-500 px-4 py-6">No results yet. Try searching for Monet, Van Gogh, or Sunflowers.</Text>
-          )}
-          extraData={version}
-        />
-      </View>
-    </SafeAreaView>
-  );
-}
-
 function HomeScreen({ navigation }) {
   const [tab, setTab] = useState('Showcase');
+  const theme = useTheme();
 
   const renderTab = () => {
     switch (tab) {
       case 'Showcase':
         return <Showcase navigation={navigation} />;
       case 'Search':
-        return <SearchScreen navigation={navigation} />;
+        return <Search navigation={navigation} />;
       case 'Discover':
         return <Discover navigation={navigation} />;
       case 'Favorites':
@@ -168,17 +43,21 @@ function HomeScreen({ navigation }) {
 
   const TabButton = ({ label }) => (
     <Pressable onPress={() => setTab(label)} style={{ flex: 1, paddingVertical: 10 }}>
-      <Text className={`text-center ${tab === label ? 'text-black font-bold' : 'text-gray-500'}`}>{label}</Text>
+      <Text style={{
+        textAlign: 'center',
+        color: tab === label ? theme.colors.onBackground : theme.colors.onSurfaceVariant,
+        fontWeight: tab === label ? 'bold' : 'normal',
+      }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ flex: 1 }}>
         {renderTab()}
       </View>
-      <View className="border-t border-gray-200 bg-white">
-        <View className="flex-row">
+      <View style={{ borderTopWidth: 1, borderTopColor: theme.colors.outline, backgroundColor: theme.colors.background }}>
+        <View style={{ flexDirection: 'row' }}>
           <TabButton label="Showcase" />
           <TabButton label="Search" />
           <TabButton label="Discover" />
@@ -190,20 +69,16 @@ function HomeScreen({ navigation }) {
   );
 }
 
-export default function App() {
-  const [isLoading, setLoading] = useState(true);
-  const [artObjects, setObjects] = useState([]); 
+function AppInner() {
+  const { theme, isDark } = useAppTheme();
 
-  const theme = {
-    ...MD3LightTheme,
-    colors: {
-      ...MD3LightTheme.colors,
-      primary: '#000000',
-      secondary: '#000000',
-      surface: '#ffffff',
-      background: '#ffffff',
-      onSurface: '#000000',
-      onBackground: '#000000',
+  const screenOptions = {
+    headerStyle: {
+      backgroundColor: theme.colors.background,
+    },
+    headerTintColor: theme.colors.onBackground,
+    headerTitleStyle: {
+      color: theme.colors.onBackground,
     },
   };
 
@@ -212,8 +87,8 @@ export default function App() {
       <PaperProvider theme={theme}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <NavigationContainer>
-            <StatusBar style="auto" />
-            <Stack.Navigator initialRouteName="Home">
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <Stack.Navigator initialRouteName="Home" screenOptions={screenOptions}>
               <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
               <Stack.Screen name="Gallery" component={GalleryView} options={{ title: 'Gallery' }} />
@@ -222,5 +97,13 @@ export default function App() {
         </GestureHandlerRootView>
       </PaperProvider>
     </UserProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppInner />
+    </ThemeProvider>
   );
 }

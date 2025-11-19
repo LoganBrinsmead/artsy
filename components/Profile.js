@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import { TextInput, Button, Card, Dialog, Portal } from 'react-native-paper';
+import { View, Text, ScrollView, Pressable } from 'react-native';
+import { TextInput, Button, Card, Dialog, Portal, Switch, useTheme } from 'react-native-paper';
 import { useUser } from '../context/UserContext';
+import { useAppTheme } from '../context/ThemeContext';
 import { getUserGalleries, createGallery, deleteGallery, updateGallery } from '../database/services';
 
 export default function Profile({ navigation }) {
   const { user, isLoggedIn, login, logout } = useUser();
+  const { toggle } = useAppTheme();
+  const theme = useTheme();
   const [username, setUsername] = useState('');
   const [galleries, setGalleries] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -81,12 +84,12 @@ export default function Profile({ navigation }) {
 
   if (!isLoggedIn) {
     return (
-      <ScrollView className="flex-1 bg-white" contentContainerStyle={{ padding: 16 }}>
-        <Text className="text-3xl font-bold text-black mb-4">Profile</Text>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ padding: 16 }}>
+        <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 16 }}>Profile</Text>
         
-        <Card className="mb-4 bg-white">
+        <Card style={{ marginBottom: 16, backgroundColor: theme.colors.surface }}>
           <Card.Content>
-            <Text className="text-lg font-semibold text-black mb-3">Login or Create Account</Text>
+            <Text style={{ fontSize: 18, fontWeight: '600', color: theme.colors.onSurface, marginBottom: 12 }}>Login or Create Account</Text>
             <TextInput
               mode="outlined"
               label="Username"
@@ -106,7 +109,7 @@ export default function Profile({ navigation }) {
           </Card.Content>
         </Card>
 
-        <Text className="text-gray-600 text-sm">
+        <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
           Enter a username to get started. If the username exists, you'll be logged in. Otherwise, a new account will be created.
         </Text>
       </ScrollView>
@@ -114,19 +117,19 @@ export default function Profile({ navigation }) {
   }
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerStyle={{ padding: 16 }}>
-      <Text className="text-3xl font-bold text-black mb-4">Profile</Text>
-      
+    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ padding: 16 }}>
+      <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 16 }}>Profile</Text>
+
       {/* User Info */}
-      <Card className="mb-4 bg-white">
+      <Card style={{ marginBottom: 16, backgroundColor: theme.colors.surface }}>
         <Card.Content>
-          <Text className="text-lg font-semibold text-black mb-2">Account</Text>
-          <Text className="text-gray-700 mb-1">Username: {user.username}</Text>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: theme.colors.onSurface, marginBottom: 8 }}>Account</Text>
+          <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>Username: {user.username}</Text>
           {user.display_name && (
-            <Text className="text-gray-700 mb-1">Display Name: {user.display_name}</Text>
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>Display Name: {user.display_name}</Text>
           )}
           {user.email && (
-            <Text className="text-gray-700 mb-3">Email: {user.email}</Text>
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>Email: {user.email}</Text>
           )}
           <Button mode="outlined" onPress={handleLogout} className="mt-2">
             Logout
@@ -134,10 +137,20 @@ export default function Profile({ navigation }) {
         </Card.Content>
       </Card>
 
+      {/* Theme Toggle */}
+      <Card style={{ marginBottom: 16, backgroundColor: theme.colors.surface }}>
+        <Card.Content>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 18, fontWeight: '600', color: theme.colors.onSurface }}>Dark Mode</Text>
+            <Switch value={theme.dark} onValueChange={toggle} />
+          </View>
+        </Card.Content>
+      </Card>
+
       {/* Galleries Section */}
-      <View className="mb-4">
-        <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-2xl font-bold text-black">My Galleries</Text>
+      <View style={{ marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.onBackground }}>My Galleries</Text>
           <Button 
             mode="contained" 
             onPress={() => setShowNewGalleryDialog(true)}
@@ -148,32 +161,32 @@ export default function Profile({ navigation }) {
         </View>
 
         {galleries.length === 0 ? (
-          <Card className="bg-white">
+          <Card style={{ backgroundColor: theme.colors.surface }}>
             <Card.Content>
-              <Text className="text-gray-600 text-center">
+              <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
                 No galleries yet. Create one to organize your favorite artworks!
               </Text>
             </Card.Content>
           </Card>
         ) : (
           galleries.map((gallery) => (
-            <Card key={gallery.id} className="mb-3 bg-white">
+            <Card key={gallery.id} style={{ marginBottom: 12, backgroundColor: theme.colors.surface }}>
               <Card.Content>
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1">
-                    <Text className="text-lg font-semibold text-black">{gallery.name}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.colors.onSurface }}>{gallery.name}</Text>
                     {gallery.description && (
-                      <Text className="text-gray-600 text-sm mt-1">{gallery.description}</Text>
+                      <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, marginTop: 4 }}>{gallery.description}</Text>
                     )}
-                    <Text className="text-gray-500 text-xs mt-2">
+                    <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, marginTop: 8 }}>
                       {gallery.artwork_count} artwork{gallery.artwork_count !== 1 ? 's' : ''}
                     </Text>
                   </View>
                   <Pressable 
                     onPress={() => handleDeleteGallery(gallery.id)}
-                    className="ml-2"
+                    style={{ marginLeft: 8 }}
                   >
-                    <Text className="text-red-600 text-sm">Delete</Text>
+                    <Text style={{ color: theme.colors.error, fontSize: 14 }}>Delete</Text>
                   </Pressable>
                 </View>
               </Card.Content>

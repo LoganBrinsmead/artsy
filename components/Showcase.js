@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, ActivityIndicator, FlatList } from 'react-native';
-import { Card } from 'react-native-paper';
+import { View, Text, ActivityIndicator, FlatList } from 'react-native';
+import { Card, useTheme } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api';
 import ArtworkCard from './ArtworkCard';
 
@@ -10,7 +11,6 @@ const FEATURED_ARTISTS = [
   { name: 'Claude Monet', searchTerm: 'Monet', bio: 'French Impressionist painter famous for his water lilies and landscape paintings.' },
   { name: 'Pablo Picasso', searchTerm: 'Picasso', bio: 'Spanish painter and sculptor, co-founder of Cubism and one of the most influential artists of the 20th century.' },
   { name: 'Rembrandt van Rijn', searchTerm: 'Rembrandt', bio: 'Dutch Golden Age painter known for his masterful use of light and shadow.' },
-  { name: 'Leonardo da Vinci', searchTerm: 'Leonardo', bio: 'Italian Renaissance polymath, painter of the Mona Lisa and The Last Supper.' },
   { name: 'Frida Kahlo', searchTerm: 'Frida Kahlo', bio: 'Mexican painter known for her self-portraits and works inspired by Mexican culture.' },
   { name: 'Georgia O\'Keeffe', searchTerm: 'O\'Keeffe', bio: 'American modernist artist known for her paintings of flowers and Southwest landscapes.' },
   { name: 'Édouard Manet', searchTerm: 'Manet', bio: 'French painter who bridged Realism and Impressionism in 19th century art.' },
@@ -33,10 +33,49 @@ export default function Showcase({ navigation }) {
   const [artist, setArtist] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const theme = useTheme();
 
   useEffect(() => {
     loadTodaysShowcase();
   }, []);
+
+  async function getNotificationsModule() {
+    try {
+      const Notifications = (await import('expo-notifications')).default || (await import('expo-notifications'));
+      return Notifications;
+    } catch (e) {
+      console.warn('expo-notifications not available; skipping notifications');
+      return null;
+    }
+  }
+
+  async function maybeNotifyNewArtist(name) {
+    try {
+      const last = await AsyncStorage.getItem('showcase:lastArtist');
+      if (last !== name) {
+        const Notifications = await getNotificationsModule();
+        if (Notifications && Notifications.scheduleNotificationAsync) {
+          // Ask permission if needed
+          try {
+            const { status } = await Notifications.getPermissionsAsync();
+            if (status !== 'granted') {
+              await Notifications.requestPermissionsAsync();
+            }
+          } catch {}
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "New Artist Showcase",
+              body: `${name} is today's featured artist. Tap to explore their works!`,
+            },
+            trigger: null,
+          });
+        }
+        await AsyncStorage.setItem('showcase:lastArtist', name);
+      }
+    } catch (e) {
+      // non-fatal
+    }
+  }
 
   async function loadTodaysShowcase() {
     try {
@@ -46,7 +85,15 @@ export default function Showcase({ navigation }) {
 
       // Search for artworks by this artist
       const results = await api.search(todaysArtist.searchTerm);
+
+      for(let result of results) {
+        if(result.name !== todaysArtist.name) {
+          results.splice(results.indexOf(result), 1);
+        }
+      }
+
       setArtworks(results.slice(0, 12)); // Show up to 12 artworks
+      await maybeNotifyNewArtist(todaysArtist.name);
     } catch (error) {
       console.error('Error loading showcase:', error);
     } finally {
@@ -60,38 +107,38 @@ export default function Showcase({ navigation }) {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#000" />
-        <Text className="text-gray-600 mt-4">Loading today's showcase...</Text>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>Loading today's showcase...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <FlatList
         data={artworks}
         keyExtractor={(item, index) => `${item?.imageURL || item?.title || 'item'}-${index}`}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListHeaderComponent={
-          <View className="mb-6">
-            <Text className="text-3xl font-bold text-black mb-2">Today's Showcase</Text>
-            <Card className="bg-gray-50 mb-4">
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 8 }}>Today's Showcase</Text>
+            <Card style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }}>
               <Card.Content>
-                <Text className="text-2xl font-bold text-black mb-2">{artist?.name}</Text>
-                <Text className="text-gray-700 leading-6">{artist?.bio}</Text>
-                <Text className="text-gray-500 text-sm mt-3">
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.onSurface, marginBottom: 8 }}>{artist?.name}</Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant, lineHeight: 24 }}>{artist?.bio}</Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, marginTop: 12 }}>
                   Featured artist changes daily
                 </Text>
               </Card.Content>
             </Card>
-            <Text className="text-xl font-semibold text-black mb-3">Featured Works</Text>
+            <Text style={{ fontSize: 20, fontWeight: '600', color: theme.colors.onBackground, marginBottom: 12 }}>Featured Works</Text>
           </View>
         }
-        ItemSeparatorComponent={() => <View className="h-6" />}
+        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
         ListEmptyComponent={
-          <Text className="text-gray-500 text-center py-8">
+          <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 32 }}>
             No artworks found for today's featured artist.
           </Text>
         }

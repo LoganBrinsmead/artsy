@@ -18,8 +18,11 @@ export default class Chicago {
     if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
       return cached.data;
     }
+      // TODO: This is an EXTREMELY crude way to paginate that needs to be improved but it works for the time being
+      let page = Math.floor(Math.random() * (3 - 1 + 1)) + 1;
 
-    const dataRequestUrl = this.baseURL + `/artworks/search?q=${encodeURIComponent(searchTerm)}`;
+
+    const dataRequestUrl = this.baseURL + `/artworks/search?q=${encodeURIComponent(searchTerm)}&page=${page}`;
     try {
       let res = await this.fetchJson(dataRequestUrl);
       const items = Array.isArray(res?.data) ? res.data : [];

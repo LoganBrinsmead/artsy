@@ -107,8 +107,11 @@ export default class MetAPI {
         // Rate limit: process in batches to stay well under 80 req/sec
         const BATCH_SIZE = 15;
         const BATCH_DELAY_MS = 300; // 15*3 batches/sec ~45 rps max
-        for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-            const batch = ids.slice(i, i + BATCH_SIZE);
+        // TODO: THIS IS AN EXTREMELY CRUDE WAY TO PAGINATE! Probably do something better later, but this works for now!
+        // randomly selects an index to start loop at to simulate random pagination since MET API currently does not support pagination
+        let randomIndex = Math.floor(Math.random() * Math.ceil(ids.length * 0.05));
+        for (randomIndex; randomIndex < ids.length; randomIndex += BATCH_SIZE) {
+            const batch = ids.slice(randomIndex, randomIndex + BATCH_SIZE);
             const batchResults = await Promise.all(
                 batch.map(async (id) => {
                     try {
@@ -120,7 +123,7 @@ export default class MetAPI {
                 })
             );
             for (const r of batchResults) if (r) results.push(r);
-            if (i + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
+            if (randomIndex + BATCH_SIZE < ids.length) await this.sleep(BATCH_DELAY_MS);
         }
 
         this.searchCache[searchTerm] = {
