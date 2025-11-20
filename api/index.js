@@ -1,6 +1,7 @@
 import MetAPI from './MET';
 import Chicago from './Chicago';
 import Harvard from './Harvard';
+import Cleveland from './Cleveland';
 
 // Filters out items that do not contain a usable image URL
 function filterItemsWithImages(items) {
@@ -33,6 +34,7 @@ class API {
       new MetAPI(cacheTTL),
       new Chicago(cacheTTL),
       new Harvard(cacheTTL),
+      new Cleveland(cacheTTL),
     ];
   }
 

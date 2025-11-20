@@ -1,0 +1,67 @@
+export default class Cleveland {
+    constructor(cacheTTL = 5 * 60 * 1000) {
+        this.name = "Cleveland Museum of Art";
+        this.baseURL = "https://openaccess-api.clevelandart.org/api";
+        // Cache with TTL: { data: [...], timestamp: Date.now() }
+        this.objectsBySearchCache = {};
+        // Cache TTL: configurable, defaults to 5 minutes (300000 ms)
+        this.CACHE_TTL = cacheTTL;
+    }
+
+    async search(searchTerm) {
+
+        const cached = this.objectsBySearchCache[searchTerm];
+        if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+            return cached.data;
+        }
+
+        const response = await fetch(`${this.baseURL}/artworks?search=${searchTerm}`);
+        let data = await response.json();
+        data = data["data"];
+
+        for(let object of data) {
+            object["imageURL"] = await this.getImageByID(object["id"]);
+            object = this.formatOutput(object);
+        }
+
+        this.objectsBySearchCache[searchTerm] = {
+            data: data,
+            timestamp: Date.now()
+        };
+        return this.objectsBySearchCache[searchTerm].data;
+    }
+
+    async getImageByID(id) {
+        let response = await fetch(`${this.baseURL}/artworks/${id}`);
+        let data = await response.json();
+        data = data["data"];
+        console.log(id, data);
+        if(!data) {
+            return null;
+        }
+        if(data["images"]["web"]["url"]){
+            return data["images"]["web"]["url"];
+        } else if(data["images"]["print"]["url"]){
+            return data["images"]["print"]["url"];
+        } else if(data["images"]["full"]["url"]){
+            return data["images"]["full"]["url"];
+        }
+        return null;
+    }
+
+  formatOutput(data) {
+    if (!data) return null;
+    return {
+      externalId: data["id"] ? String(data["id"]) : null,
+      title: data["title"] || "Untitled",
+      artist: data["artist_title"] || "Artist Unknown",
+      datePainted: data["date_end"] || "",
+      countryOfOrigin: data["place_of_origin"] || "",
+      description: data["description"] || "No description available.",
+      department: data["department_title"] || "",
+      style: data["style_title"] || "",
+      imageURL: data["imageURL"] || null,
+    };
+  }
+
+}
