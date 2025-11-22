@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Animated, Easing, Pressable } from 'react-native';
 import { Button, SegmentedButtons, useTheme } from 'react-native-paper';
 import api from '../api';
 import ArtworkCard from './ArtworkCard';
@@ -7,7 +7,7 @@ import ArtworkCard from './ArtworkCard';
 // Curated discovery themes
 // TODO: more granular discovery themes through the use of specific artist names but has the potential to become stale, let's maybe add random indexing and more artists?
 const DISCOVERY_THEMES = [
-  { label: 'Impressionism', artistsSpecified: true, value: 'impressionism', artists: ['Vincent Van Gogh', 'Claude Monet', 'Edgar Degas','Camille Pissarro']},
+  { label: 'Impressionism', artistsSpecified: true, value: 'impressionism', artists: ['Vincent Van Gogh', 'Claude Monet', 'Edgar Degas', 'Camille Pissarro'] },
   { label: 'Renaissance', artistsSpecified: false, value: 'renaissance', artists: ['renaissance'] },
   { label: 'Modern Art', artistsSpecified: false, value: 'modern', artists: ['modern'] },
   { label: 'Portraits', artistsSpecified: false, value: 'portraits', artists: ['portraits'] },
@@ -23,7 +23,33 @@ export default function Discover({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const placeholderCount = 6;
+  const [placeholders] = useState(
+    Array.from({ length: placeholderCount }, () => new Animated.Value(0))
+  );
+
+
   useEffect(() => {
+    if (loading) {
+      placeholders.forEach(v => v.setValue(0));
+      Animated.stagger(
+        150,
+        placeholders.map((v) =>
+          Animated.timing(v, {
+            toValue: 1,
+            duration: 400,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          })
+        )
+      ).start();
+    } else {
+      placeholders.forEach(v => v.setValue(0));
+    }
+  }, [loading, selectedTheme]);
+
+  useEffect(() => {
+    
     loadArtworks();
   }, [selectedTheme]);
 
@@ -35,11 +61,11 @@ export default function Discover({ navigation }) {
 
       let results;
 
-      if(theme.artistsSpecified) {
+      if (theme.artistsSpecified) {
         results = await Promise.all(theme.artists.map(artist => api.search(artist)));
         results = results.flat();
         results = results.filter(r => theme.artists.includes(r.artist));
-        
+
       } else {
         results = await api.search(theme.value);
         results = results.flat();
@@ -75,7 +101,7 @@ export default function Discover({ navigation }) {
         ListHeaderComponent={
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 30, fontWeight: 'bold', color: theme.colors.onBackground, marginBottom: 16 }}>Discover</Text>
-            
+
             {/* Theme Selection */}
             <View style={{ marginBottom: 16 }}>
               <Text style={{ fontSize: 14, fontWeight: '600', color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>Browse by Theme</Text>
@@ -111,19 +137,24 @@ export default function Discover({ navigation }) {
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
-        ListEmptyComponent={
-          loading ? (
-            <View style={{ paddingVertical: 48, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>Loading artworks...</Text>
-            </View>
-          ) : (
-            <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 32 }}>
-              No artworks found for this theme.
-            </Text>
-          )
-        }
-        refreshing={refreshing}
+        ListEmptyComponent={loading ? (
+          <View>
+            {placeholders.map((opacity, i) => (
+              <Animated.View
+                key={`ph-${i}`}
+                style={{ opacity, backgroundColor: theme.colors.surface, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}
+              >
+                <View style={{ width: '100%', height: 160, backgroundColor: theme.colors.surfaceVariant }} />
+                <View style={{ padding: 16 }}>
+                  <View style={{ height: 16, backgroundColor: theme.colors.surfaceVariant, borderRadius: 4, width: '50%', marginBottom: 8 }} />
+                  <View style={{ height: 12, backgroundColor: theme.colors.surfaceVariant, borderRadius: 4, width: '33%' }} />
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        ) : (
+          <Text style={{ color: theme.colors.onSurfaceVariant, paddingHorizontal: 16, paddingVertical: 24 }}>No results yet. Try searching for Monet, Van Gogh, or Sunflowers.</Text>
+        )} refreshing={refreshing}
         onRefresh={handleRefresh}
       />
     </View>

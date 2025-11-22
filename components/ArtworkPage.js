@@ -5,8 +5,8 @@ import { Text as PaperText, IconButton, Menu, Button, Portal, Dialog, useTheme }
 import { useUser } from '../context/UserContext';
 import { addFavorite, removeFavorite, isFavorited, getUserGalleries, addArtworkToGallery, isArtworkInGallery } from '../database/services';
 
-export default function ArtworkPage(props) {
-  const p = props?.route?.params ?? props;
+export default function ArtworkPage({ route, navigation }) {
+  const p = route?.params ?? {};
   const imageURL = p?.imageURL || p?.uri ||
     "Error loading artwork.";
   const title = p?.title || "Untitled";
@@ -223,7 +223,23 @@ export default function ArtworkPage(props) {
               </View>
             )}
           </View>
-          <Text style={{ color: theme.colors.onBackground, fontSize: 14, marginTop: 4 }}>{artist}</Text>
+          <Pressable 
+            onPress={() => navigation.navigate('Artist', { artistName: artist })}
+            style={({ pressed }) => ({ 
+              opacity: pressed ? 0.6 : 1,
+              marginTop: 4
+            })}
+          >
+            <Text style={{ 
+              color: theme.colors.primary, 
+              fontSize: 16,
+              fontWeight: '500',
+              textDecorationLine: 'underline'
+            }}>
+              {artist}
+            </Text>
+          </Pressable>
+          <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, marginTop: 4 }}>{datePainted}</Text>
           <Text style={{ color: theme.colors.onBackground, fontSize: 14, marginTop: 4 }}>{source}</Text>
           <Text style={{ color: theme.colors.onBackground, fontSize: 14, marginTop: 4 }}>{department}</Text>
           <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 16, lineHeight: 24, marginTop: 12 }}>{description}</Text>

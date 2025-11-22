@@ -85,14 +85,24 @@ export default function Showcase({ navigation }) {
 
       // Search for artworks by this artist
       const results = await api.search(todaysArtist.searchTerm);
-
-      for(let result of results) {
-        if(result.name !== todaysArtist.name) {
-          results.splice(results.indexOf(result), 1);
+      
+      // Filter to only include artworks by this exact artist
+      const filteredResults = results.filter(artwork => 
+        artwork.artist && 
+        artwork.artist.toLowerCase() === todaysArtist.name.toLowerCase()
+      );
+      
+      // Remove duplicates by imageURL
+      const uniqueResults = [];
+      const seen = new Set();
+      for (const item of filteredResults) {
+        if (item.imageURL && !seen.has(item.imageURL)) {
+          seen.add(item.imageURL);
+          uniqueResults.push(item);
         }
       }
-
-      setArtworks(results.slice(0, 12)); // Show up to 12 artworks
+      
+      setArtworks(uniqueResults.slice(0, 12)); // Show up to 12 artworks
       await maybeNotifyNewArtist(todaysArtist.name);
     } catch (error) {
       console.error('Error loading showcase:', error);

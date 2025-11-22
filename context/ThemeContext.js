@@ -4,7 +4,7 @@ import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
 
 const ThemeContext = createContext();
 
-// Custom light theme matching current app aesthetic
+// Custom light theme
 const lightTheme = {
   ...MD3LightTheme,
   colors: {
@@ -26,7 +26,7 @@ const lightTheme = {
   },
 };
 
-// Custom dark theme matching current app aesthetic
+// Custom dark theme
 const darkTheme = {
   ...MD3DarkTheme,
   colors: {

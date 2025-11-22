@@ -13,6 +13,7 @@ import Discover from './components/Discover';
 import Favorites from './components/Favorites';
 import Profile from './components/Profile';
 import GalleryView from './components/GalleryView';
+import ArtistPage from './components/ArtistPage';
 import Search from './components/Search';
 import { UserProvider } from './context/UserContext';
 import { ThemeProvider, useAppTheme } from './context/ThemeContext';
@@ -90,8 +91,11 @@ function AppInner() {
             <StatusBar style={isDark ? 'light' : 'dark'} />
             <Stack.Navigator initialRouteName="Home" screenOptions={screenOptions}>
               <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="Artwork" component={ArtworkPage} options={{ title: 'Artwork' }} />
+              <Stack.Screen name="Artwork" component={ArtworkPage} options={({ route }) => ({ 
+                title: route.params?.title || 'Artwork' 
+              })} />
               <Stack.Screen name="Gallery" component={GalleryView} options={{ title: 'Gallery' }} />
+              <Stack.Screen name="Artist" component={ArtistPage} options={{ title: 'Artist' }} />
             </Stack.Navigator>
           </NavigationContainer>
         </GestureHandlerRootView>
