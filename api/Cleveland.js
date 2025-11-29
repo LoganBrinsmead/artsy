@@ -20,6 +20,8 @@ export default class Cleveland {
         let data = await response.json();
         data = data["data"];
 
+        // Cleveland has lots of data, let's limit it to 100
+        data = data.slice(0, 100);
         for(let object of data) {
             object["imageURL"] = await this.getImageByID(object["id"]);
             object = this.formatOutput(object);
