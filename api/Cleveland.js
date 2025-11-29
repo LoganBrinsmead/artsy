@@ -16,6 +16,7 @@ export default class Cleveland {
         }
 
         const response = await fetch(`${this.baseURL}/artworks?search=${searchTerm}`);
+        // console.log("URL: ", `${this.baseURL}/artworks?search=${searchTerm}`);
         let data = await response.json();
         data = data["data"];
 
@@ -35,18 +36,18 @@ export default class Cleveland {
         let response = await fetch(`${this.baseURL}/artworks/${id}`);
         let data = await response.json();
         data = data["data"];
-        console.log(id, data);
-        if(!data) {
+        
+        try {
+            if(data["images"]["web"]["url"]){
+                return data["images"]["web"]["url"];
+            } else if(data["images"]["print"]["url"]){
+                return data["images"]["print"]["url"];
+            }
+            return null;
+        } catch (e) {
+            console.warn("Error retrieving information from Cleveland Museum of Art API, getImageByID method: ", e);
             return null;
         }
-        if(data["images"]["web"]["url"]){
-            return data["images"]["web"]["url"];
-        } else if(data["images"]["print"]["url"]){
-            return data["images"]["print"]["url"];
-        } else if(data["images"]["full"]["url"]){
-            return data["images"]["full"]["url"];
-        }
-        return null;
     }
 
   formatOutput(data) {
