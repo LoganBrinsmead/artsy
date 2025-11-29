@@ -11,7 +11,6 @@ const FEATURED_ARTISTS = [
   { name: 'Claude Monet', searchTerm: 'Monet', bio: 'French Impressionist painter famous for his water lilies and landscape paintings.' },
   { name: 'Pablo Picasso', searchTerm: 'Picasso', bio: 'Spanish painter and sculptor, co-founder of Cubism and one of the most influential artists of the 20th century.' },
   { name: 'Rembrandt van Rijn', searchTerm: 'Rembrandt', bio: 'Dutch Golden Age painter known for his masterful use of light and shadow.' },
-  { name: 'Frida Kahlo', searchTerm: 'Frida Kahlo', bio: 'Mexican painter known for her self-portraits and works inspired by Mexican culture.' },
   { name: 'Georgia O\'Keeffe', searchTerm: 'O\'Keeffe', bio: 'American modernist artist known for her paintings of flowers and Southwest landscapes.' },
   { name: 'Édouard Manet', searchTerm: 'Manet', bio: 'French painter who bridged Realism and Impressionism in 19th century art.' },
   { name: 'Paul Cézanne', searchTerm: 'Cézanne', bio: 'French Post-Impressionist painter whose work laid foundations for Cubism.' },
