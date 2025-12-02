@@ -16,7 +16,7 @@ export default class Cleveland {
         }
 
         const response = await fetch(`${this.baseURL}/artworks?search=${searchTerm}`);
-        // console.log("URL: ", `${this.baseURL}/artworks?search=${searchTerm}`);
+        console.log("URL: ", `${this.baseURL}/artworks?search=${searchTerm}`);
         let data = await response.json();
         data = data["data"];
 
@@ -57,7 +57,7 @@ export default class Cleveland {
     return {
       externalId: data["id"] ? String(data["id"]) : null,
       title: data["title"] || "Untitled",
-      artist: data["artist_title"] || "Artist Unknown",
+      artist: data["creators"][0]["description"] || "Artist Unknown",
       datePainted: data["date_end"] || "",
       countryOfOrigin: data["place_of_origin"] || "",
       description: data["description"] || "No description available.",
