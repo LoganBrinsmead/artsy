@@ -14,6 +14,7 @@ import Favorites from './components/Favorites';
 import Profile from './components/Profile';
 import GalleryView from './components/GalleryView';
 import ArtistPage from './components/ArtistPage';
+import MuseumPage from './components/MuseumPage';
 import Search from './components/Search';
 import { UserProvider } from './context/UserContext';
 import { ThemeProvider, useAppTheme } from './context/ThemeContext';
@@ -96,6 +97,9 @@ function AppInner() {
               })} />
               <Stack.Screen name="Gallery" component={GalleryView} options={{ title: 'Gallery' }} />
               <Stack.Screen name="Artist" component={ArtistPage} options={{ title: 'Artist' }} />
+              <Stack.Screen name="Museum" component={MuseumPage} options={({ route }) => ({ 
+                title: route.params?.label || 'Museum' 
+              })} />
             </Stack.Navigator>
           </NavigationContainer>
         </GestureHandlerRootView>
