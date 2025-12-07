@@ -34,6 +34,13 @@ const FEATURED_ARTISTS = [
   { label: 'Andy Warhol', value: 'Andy Warhol', type: 'artist' },
 ];
 
+// Random search terms for museum fallback
+const MUSEUM_FALLBACK_SEARCHES = [
+  'portrait', 'landscape', 'sculpture', 'painting', 'modern', 'ancient',
+  'renaissance', 'impressionism', 'abstract', 'contemporary', 'classical',
+  'baroque', 'romantic', 'realism', 'expressionism', 'cubism'
+];
+
 export default function Discover({ navigation }) {
   const theme = useTheme();
   
@@ -44,7 +51,11 @@ export default function Discover({ navigation }) {
   });
   
   const [artworks, setArtworks] = useState([]);
+  const [allResults, setAllResults] = useState([]); // Store all fetched results
+  const [displayedCount, setDisplayedCount] = useState(20); // Number of items to display
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreContent, setHasMoreContent] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const placeholderCount = 6;
@@ -75,9 +86,16 @@ export default function Discover({ navigation }) {
     loadArtworks();
   }, [selectedFilter]);
 
+  // Update displayed artworks when displayedCount or allResults change
+  useEffect(() => {
+    setArtworks(allResults.slice(0, displayedCount));
+    setHasMoreContent(displayedCount < allResults.length);
+  }, [displayedCount, allResults]);
+
   const loadArtworks = useCallback(async () => {
     try {
       setLoading(true);
+      setDisplayedCount(20); // Reset to initial count
       let results;
 
       if (selectedFilter.type === 'theme') {
@@ -90,17 +108,44 @@ export default function Discover({ navigation }) {
           results = await api.search(themeConfig.value);
         }
       } else if (selectedFilter.type === 'museum') {
+        // First try to get cached results
         results = await api.search(selectedFilter.label);
         results = results.filter(r => r.source === selectedFilter.value);
+        
+        // If no cached results, perform random searches and mix them
+        if (results.length === 0) {
+          const randomSearches = [];
+          const numSearches = 3 + Math.floor(Math.random() * 3); // 3-5 random searches
+          
+          // Shuffle and pick random search terms
+          const shuffled = [...MUSEUM_FALLBACK_SEARCHES].sort(() => Math.random() - 0.5);
+          const selectedTerms = shuffled.slice(0, numSearches);
+          
+          // Also add some random artists
+          const randomArtists = [...FEATURED_ARTISTS].sort(() => Math.random() - 0.5).slice(0, 2);
+          selectedTerms.push(...randomArtists.map(a => a.value));
+          
+          // Perform all searches in parallel
+          const searchResults = await Promise.all(
+            selectedTerms.map(term => api.search(term).catch(() => []))
+          );
+          
+          // Flatten and filter by museum
+          results = searchResults.flat().filter(r => r.source === selectedFilter.value);
+          
+          // Mix results from different search terms
+          results.sort(() => Math.random() - 0.5);
+        }
       } else if (selectedFilter.type === 'artist') {
         results = await api.search(selectedFilter.value);
         results = results.filter(r => r.artist && r.artist.includes(selectedFilter.value));
       }
 
       results.sort(() => Math.random() - 0.5); // randomize results
-      setArtworks(results.slice(0, 50)); // Show up to 50 artworks
+      setAllResults(results);
     } catch (error) {
       console.error('Error loading discover artworks:', error);
+      setAllResults([]);
     } finally {
       setLoading(false);
     }
@@ -111,6 +156,17 @@ export default function Discover({ navigation }) {
     await loadArtworks();
     setRefreshing(false);
   }, [loadArtworks]);
+
+  const handleLoadMore = useCallback(() => {
+    if (loadingMore || !hasMoreContent) return;
+    
+    setLoadingMore(true);
+    // Simulate a small delay for better UX
+    setTimeout(() => {
+      setDisplayedCount(prev => prev + 20);
+      setLoadingMore(false);
+    }, 300);
+  }, [loadingMore, hasMoreContent]);
 
   const renderItem = useCallback(({ item }) => (
     <ArtworkCard navigation={navigation} {...item} />
@@ -123,7 +179,11 @@ export default function Discover({ navigation }) {
   const renderFilterButton = useCallback((filter) => (
     <Pressable
       key={filter.value}
-      onPress={() => setSelectedFilter(filter)}
+      onPress={() => {
+        if (selectedFilter.value !== filter.value) {
+          setSelectedFilter(filter);
+        }
+      }}
       style={{
         paddingHorizontal: 20,
         paddingVertical: 10,
@@ -216,6 +276,34 @@ export default function Discover({ navigation }) {
 
   const ItemSeparatorComponent = useCallback(() => <View style={{ height: 24 }} />, []);
 
+  const ListFooterComponent = useMemo(() => {
+    if (loading) return null; // Don't show footer while initial loading
+    
+    if (loadingMore) {
+      return (
+        <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+        </View>
+      );
+    }
+    
+    if (!hasMoreContent && artworks.length > 0) {
+      return (
+        <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+          <Text style={{ 
+            color: theme.colors.onSurfaceVariant, 
+            fontSize: 14,
+            fontStyle: 'italic'
+          }}>
+            You've seen the entire collection for this category
+          </Text>
+        </View>
+      );
+    }
+    
+    return null;
+  }, [loading, loadingMore, hasMoreContent, artworks.length, theme]);
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <FlatList
@@ -226,8 +314,11 @@ export default function Discover({ navigation }) {
         ListHeaderComponent={ListHeaderComponent}
         ItemSeparatorComponent={ItemSeparatorComponent}
         ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={ListFooterComponent}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
         updateCellsBatchingPeriod={50}

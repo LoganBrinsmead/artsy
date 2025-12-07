@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, Animated, Easing, FlatList } from 'react-native';
+import { View, Text, Animated, Easing, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInput, Button, useTheme } from 'react-native-paper';
 import ArtworkCard from './ArtworkCard';
@@ -9,7 +9,11 @@ export default function Search({ navigation }) {
   const theme = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  const [allResults, setAllResults] = useState([]); // Store all fetched results
+  const [displayedCount, setDisplayedCount] = useState(20); // Number of items to display
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreContent, setHasMoreContent] = useState(true);
   const [error, setError] = useState('');
   const placeholderCount = 6;
   const [placeholders] = useState(
@@ -28,14 +32,15 @@ export default function Search({ navigation }) {
     if (!trimmed) return;
     setLoading(true);
     setError('');
+    setDisplayedCount(20); // Reset to initial count
     try {
       const data = await api.search(trimmed);
       const arr = Array.isArray(data) ? data : [];
-      setResults(arr);
+      setAllResults(arr);
       setVersion(v => v + 1);
     } catch (e) {
       setError('Failed to fetch results.');
-      setResults([]);
+      setAllResults([]);
     } finally {
       setLoading(false);
     }
@@ -81,6 +86,23 @@ export default function Search({ navigation }) {
     }
   };
 
+  const handleLoadMore = useCallback(() => {
+    if (loadingMore || !hasMoreContent) return;
+    
+    setLoadingMore(true);
+    // Simulate a small delay for better UX
+    setTimeout(() => {
+      setDisplayedCount(prev => prev + 20);
+      setLoadingMore(false);
+    }, 300);
+  }, [loadingMore, hasMoreContent]);
+
+  // Update displayed results when displayedCount or allResults change
+  useEffect(() => {
+    setResults(allResults.slice(0, displayedCount));
+    setHasMoreContent(displayedCount < allResults.length);
+  }, [displayedCount, allResults]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={{ flex: 1 }}>
@@ -120,6 +142,25 @@ export default function Search({ navigation }) {
           maxToRenderPerBatch={10}
           windowSize={10}
           removeClippedSubviews
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loading ? null : loadingMore ? (
+              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              </View>
+            ) : !hasMoreContent && results.length > 0 ? (
+              <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                <Text style={{ 
+                  color: theme.colors.onSurfaceVariant, 
+                  fontSize: 14,
+                  fontStyle: 'italic'
+                }}>
+                  You've seen the entire collection for this category
+                </Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={loading ? (
             <View>
               {placeholders.map((opacity, i) => (
